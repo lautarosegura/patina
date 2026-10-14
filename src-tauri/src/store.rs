@@ -1,6 +1,3 @@
-//! The queue, the history and the notes, persisted in the data directory with the same file
-//! names and JSON shape as the Python version. Only the running app writes them.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -14,7 +11,6 @@ pub const NOTES_FILE: &str = "notas.md";
 
 pub struct Store {
     pub items: Vec<Item>,
-    /// Items that left the queue (cleared or deleted), oldest first.
     pub history: Vec<Item>,
     dir: Option<PathBuf>,
 }
@@ -32,7 +28,6 @@ pub fn write_atomic(path: &Path, data: &[u8]) -> std::io::Result<()> {
     fs::rename(tmp, path)
 }
 
-/// A file that doesn't parse is moved aside to `<name>.corrupt` and the list starts empty.
 fn load_list(path: &Path) -> Vec<Item> {
     let Ok(raw) = fs::read_to_string(path) else { return Vec::new() };
     if raw.trim().is_empty() {
@@ -50,7 +45,6 @@ impl Store {
         Store { items: load_list(&dir.join(ITEMS_FILE)), history: load_list(&dir.join(HISTORY_FILE)), dir: Some(dir) }
     }
 
-    /// A store that never touches disk, for tests.
     #[cfg(test)]
     pub fn in_memory() -> Self {
         Store { items: Vec::new(), history: Vec::new(), dir: None }
@@ -72,8 +66,6 @@ impl Store {
         self.save_list(HISTORY_FILE, &self.history);
     }
 
-    /// Adds an item at the end. Skips empty text and the same text as the last unchecked item
-    /// (a selection captured twice in a row).
     pub fn add(&mut self, kind: Kind, text: &str, source: &str, context: Context) -> bool {
         let text = text.trim_matches('\n');
         if text.trim().is_empty() {
@@ -91,7 +83,7 @@ impl Store {
             done: false,
             context,
             archived: None,
-            other: Default::default(),
+            unknown_fields: Default::default(),
         });
         self.save();
         true
@@ -115,7 +107,6 @@ impl Store {
         }
     }
 
-    /// Moves the given items from the queue to the history.
     pub fn archive(&mut self, ids: &[String]) {
         if ids.is_empty() {
             return;

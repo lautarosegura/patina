@@ -208,7 +208,7 @@
             break;
           }
           case 'forget_item': state.history = state.history.filter((item) => item.id !== args.id); break;
-          case 'copy_text': window.__PATINA_MOCK__.clipboard = args.text; if (args.hide) window.__PATINA_MOCK__.hidden = true; break;
+          case 'copy_text': window.__PATINA_MOCK__.clipboard = args.text; if (args.hideAfterCopy) window.__PATINA_MOCK__.hidden = true; break;
           case 'save_notes': state.notes = args.text; break;
           case 'open_url': window.__PATINA_MOCK__.openedURLs.push(args.url); break;
           case 'hide_window': window.__PATINA_MOCK__.hidden = true; break;

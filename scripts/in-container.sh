@@ -1,11 +1,8 @@
 #!/bin/sh
-# Corre un comando dentro del contenedor de compilación, con el repo montado en /src.
-# Las cachés de cargo, npm y xwin quedan en ~/.cache/patina-build para no repetir descargas.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/patina-build"
 mkdir -p "$CACHE/registry" "$CACHE/git" "$CACHE/xwin" "$CACHE/npm" "$CACHE/home"
-# Dos compilaciones a la vez sobre el mismo target/ se pisan: se ejecutan de a una.
 exec 9>"$CACHE/lock"
 flock 9
 podman image exists patina-build || podman build -t patina-build -f "$ROOT/build/Containerfile" "$ROOT/build"

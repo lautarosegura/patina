@@ -20,7 +20,6 @@ py = SourceFileLoader("patina_py", SOURCE).load_module()
 
 fixtures: dict[str, list] = {}
 
-# --- parse_sent y format_sent ---
 SENT = [
     ("8:27 PM, 10/13/2026", ""), ("8:27 pm, 10/13/2026", "mdy"), ("20:27, 13/10/2026", "dmy"),
     ("20:27, 3/4/2026", "dmy"), ("20:27, 3/4/2026", "mdy"), ("8:05 a. m., 3/4/2026", "dmy"),
@@ -37,7 +36,6 @@ fixtures["format_time"] = [
     {"iso": s, "expected": py.format_time(s)} for s in ["2026-10-13T20:27:00", "2026-01-05T07:03", "2026-12-31T23:59:59"]
 ]
 
-# --- window_source ---
 WINDOWS = [
     {"class": "brave-browser", "title": "WhatsApp - Brave"},
     {"class": "brave-browser", "title": "(19) WhatsApp Business - Brave"},
@@ -50,7 +48,6 @@ WINDOWS = [
 fixtures["window_source"] = [{"window": w, "expected": py.window_source(w)} for w in WINDOWS]
 
 
-# --- linkify, como segmentos (texto o link) ---
 def segments(text: str) -> list[dict]:
     out, pos = [], 0
     for m in py.URL_RE.finditer(text):
@@ -71,7 +68,6 @@ LINK_TEXTS = [
 fixtures["linkify"] = [{"text": t, "expected": segments(t)} for t in LINK_TEXTS]
 
 
-# --- page_text y browser_context: archivos temporales en lugar de $XDG_RUNTIME_DIR ---
 tmp = tempfile.mkdtemp()
 py.SELECTION_PATH = os.path.join(tmp, "selection.json")
 py.PAGE_PATH = os.path.join(tmp, "page.json")
@@ -126,7 +122,6 @@ for name, text, title, sel, age, page in CONTEXT_CASES:
     fixtures["page_text"].append({"name": name, "text": text, "selection": s, "now": NOW, "expected": py.page_text(text)})
 
 
-# --- host nativo: el binario real por stdin/stdout, con sus archivos en un directorio temporal ---
 def host_run(messages: list[bytes], runtime: str, data: str) -> tuple[list[dict], dict, dict, list[str]]:
     payload = b"".join(struct.pack("<I", len(m)) + m for m in messages)
     env = {"XDG_RUNTIME_DIR": runtime, "XDG_DATA_HOME": data, "PATH": "/usr/bin"}
@@ -179,7 +174,7 @@ for name, msgs in HOST_CASES:
         t_last = time.time()
         r, sel, page, favs = host_run([message], runtime, data)
         replies += r
-    for record in (sel, page):  # "now": lo fijó el último mensaje; "kept": viene de uno anterior
+    for record in (sel, page):
         for key in ("received", "since"):
             if key in record:
                 record[key] = "now" if record[key] >= t_last else "kept"
@@ -187,7 +182,6 @@ for name, msgs in HOST_CASES:
                                     "replies": replies, "selection": sel, "page": page, "favicons": favs})
 
 
-# --- Store: secuencias de operaciones ---
 class FakeStore(py.Store):
     def __init__(self) -> None:
         self.items, self.history = [], []
@@ -230,7 +224,6 @@ for op in [
 fixtures["store"] = log
 
 
-# --- decisión de captura (PatinaApp.capture con el sistema simulado) ---
 class Notifs(list):
     pass
 

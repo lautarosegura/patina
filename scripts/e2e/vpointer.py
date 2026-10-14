@@ -16,10 +16,15 @@ import time
 
 WIDTH, HEIGHT = int(sys.argv[1]), int(sys.argv[2])
 BTN_LEFT = 0x110
+WL_DISPLAY = 1
+GET_REGISTRY = 1
+REGISTRY_GLOBAL = 0
+CREATE_VIRTUAL_POINTER = 0
+MOTION_ABSOLUTE = 1
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.connect(os.path.join(os.environ["XDG_RUNTIME_DIR"], os.environ["WAYLAND_DISPLAY"]))
-next_id = 2  # 1 is wl_display
+next_id = WL_DISPLAY + 1
 
 
 def new_id() -> int:
@@ -41,7 +46,6 @@ buffer = b""
 
 
 def events():
-    """Reads complete events until the socket has nothing more for now."""
     global buffer
     sock.settimeout(0.3)
     try:
@@ -62,10 +66,10 @@ def events():
 
 
 registry = new_id()
-request(1, 1, struct.pack("<I", registry))  # wl_display.get_registry
+request(WL_DISPLAY, GET_REGISTRY, struct.pack("<I", registry))
 globals_ = {}
 for obj, opcode, body in events():
-    if obj == registry and opcode == 0:  # wl_registry.global
+    if obj == registry and opcode == REGISTRY_GLOBAL:
         name, length = struct.unpack("<II", body[:8])
         interface = body[8:8 + length - 1].decode()
         (version,) = struct.unpack("<I", body[8 + length + (-length % 4):][:4])
@@ -82,7 +86,7 @@ def bind(interface: str, version: int) -> int:
 seat = bind("wl_seat", 1)
 manager = bind("zwlr_virtual_pointer_manager_v1", 1)
 pointer = new_id()
-request(manager, 0, struct.pack("<II", seat, pointer))  # create_virtual_pointer(seat, id)
+request(manager, CREATE_VIRTUAL_POINTER, struct.pack("<II", seat, pointer))
 
 
 def now() -> int:
@@ -99,7 +103,7 @@ for line in sys.stdin:
         continue
     if parts[0] == "move":
         x, y = int(parts[1]), int(parts[2])
-        request(pointer, 1, struct.pack("<IIIII", now(), x, y, WIDTH, HEIGHT))  # motion_absolute
+        request(pointer, MOTION_ABSOLUTE, struct.pack("<IIIII", now(), x, y, WIDTH, HEIGHT))
         frame()
     elif parts[0] == "click":
         for _ in range(int(parts[1]) if len(parts) > 1 else 1):

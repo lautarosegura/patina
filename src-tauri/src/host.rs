@@ -1,8 +1,3 @@
-//! Native messaging host for the browser extension. The browser starts the same `patina`
-//! executable with a `chrome-extension://…` argument and talks over stdin/stdout: each message
-//! is JSON prefixed by its length as a 4-byte little-endian integer. This mode doesn't start
-//! Tauri, because the browser launches one process per message.
-
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -31,15 +26,11 @@ fn text(data: &Value, key: &str) -> String {
     }
 }
 
-/// Decodes the favicon the extension sent and returns its PNG bytes, if it is a real PNG.
 pub fn favicon_png(encoded: &str) -> Option<Vec<u8>> {
     let png = base64::engine::general_purpose::STANDARD.decode(encoded).ok()?;
     (png.starts_with(PNG_MAGIC) && png.len() <= MAX_FAVICON_BYTES).then_some(png)
 }
 
-/// Turns one extension message into the record to store. `previous_page` is the stored active
-/// tab, so `since` survives a title change. `save_favicon(host, png)` stores the icon and
-/// returns its file name. None for a malformed message.
 pub fn parse_message(
     raw: &[u8],
     previous_page: Option<&Page>,
@@ -57,8 +48,8 @@ pub fn parse_message(
     };
     if data.get("kind").and_then(Value::as_str) == Some("page") {
         let tab = text(&data, "tab");
-        let since = match previous_page {
-            Some(p) if p.tab == tab && p.url == url => p.since,
+        let active_since = match previous_page {
+            Some(p) if p.tab == tab && p.url == url => p.active_since,
             _ => now,
         };
         return Some(Record::Page(Page {
@@ -68,7 +59,7 @@ pub fn parse_message(
             host,
             title: text(&data, "title"),
             favicon,
-            since,
+            active_since,
             received: now,
         }));
     }
@@ -99,7 +90,6 @@ pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
     serde_json::from_slice(&fs::read(path).ok()?).ok()
 }
 
-/// Writes a runtime file readable only by the user: it holds selected text and URLs.
 pub fn write_private(path: &Path, value: &impl serde::Serialize) -> io::Result<()> {
     let data = serde_json::to_vec(value).expect("record serializes");
     write_atomic(path, &data)?;
@@ -111,6 +101,22 @@ pub fn write_private(path: &Path, value: &impl serde::Serialize) -> io::Result<(
     Ok(())
 }
 
+fn read_frame(reader: &mut impl Read) -> io::Result<Option<Vec<u8>>> {
+    let mut header = [0u8; 4];
+    if reader.read_exact(&mut header).is_err() {
+        return Ok(None);
+    }
+    let mut raw = vec![0u8; u32::from_ne_bytes(header) as usize];
+    reader.read_exact(&mut raw)?;
+    Ok(Some(raw))
+}
+
+fn write_frame(writer: &mut impl Write, payload: &[u8]) -> io::Result<()> {
+    writer.write_all(&(payload.len() as u32).to_ne_bytes())?;
+    writer.write_all(payload)?;
+    writer.flush()
+}
+
 pub fn run(paths: &Paths) -> io::Result<()> {
     let mut stdin = io::stdin().lock();
     let mut stdout = io::stdout().lock();
@@ -118,13 +124,7 @@ pub fn run(paths: &Paths) -> io::Result<()> {
         let name = favicon_name(host);
         write_atomic(&paths.favicons.join(&name), png).ok().map(|_| name)
     };
-    loop {
-        let mut header = [0u8; 4];
-        if stdin.read_exact(&mut header).is_err() {
-            return Ok(());
-        }
-        let mut raw = vec![0u8; u32::from_le_bytes(header) as usize];
-        stdin.read_exact(&mut raw)?;
+    while let Some(raw) = read_frame(&mut stdin)? {
         let previous: Option<Page> = read_json(&paths.page);
         let now = crate::paths::epoch_seconds();
         let record = parse_message(&raw, previous.as_ref(), now, &mut save_favicon);
@@ -134,8 +134,7 @@ pub fn run(paths: &Paths) -> io::Result<()> {
             None => false,
         };
         let reply = serde_json::to_vec(&json!({ "ok": ok })).expect("reply serializes");
-        stdout.write_all(&(reply.len() as u32).to_le_bytes())?;
-        stdout.write_all(&reply)?;
-        stdout.flush()?;
+        write_frame(&mut stdout, &reply)?;
     }
+    Ok(())
 }

@@ -1,4 +1,3 @@
-# Entorno de compilación de Patina: binario de Linux, instaladores (deb, rpm) y compilación cruzada a Windows.
 FROM registry.fedoraproject.org/fedora:44
 
 RUN dnf install -y --setopt=install_weak_deps=False \
@@ -13,14 +12,11 @@ RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-too
     && cargo install --locked cargo-xwin \
     && chmod -R a+rwX /opt/cargo /opt/rustup
 
-# El empaquetado de AppImage la exige porque Cargo.toml activa la bandeja (que solo usa Windows).
 RUN dnf install -y --setopt=install_weak_deps=False libayatana-appindicator-gtk3-devel && dnf clean all
 
-# Prueba de interfaz aislada: Sway sin pantalla, teclado y mouse virtuales, capturas y portapapeles.
 RUN dnf install -y --setopt=install_weak_deps=False \
         sway wtype grim wl-clipboard dbus-daemon python3 abattis-cantarell-fonts google-noto-sans-fonts \
     && dnf clean all
 
-# cargo-xwin descarga el CRT y el SDK de Windows de Microsoft; requiere aceptar su licencia.
 ENV XWIN_ACCEPT_LICENSE=1
 WORKDIR /src

@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Where Patina keeps its files. Data matches the Python version (~/.local/share/patina on
-/// Linux); runtime files hold the extension's latest selection and active tab.
 pub struct Paths {
     pub data: PathBuf,
     pub favicons: PathBuf,

@@ -12,10 +12,6 @@ mod parity_tests;
 use app::{Command, USAGE};
 use paths::Paths;
 
-/// The executable has three modes, chosen before Tauri starts:
-/// - `patina tap` (Linux): Hyprland calls it on every Shift release; must stay cheap.
-/// - `patina chrome-extension://…`: the browser extension's native messaging host.
-/// - anything else: the app, or a command forwarded to the instance already running.
 pub fn main() {
     let args: Vec<String> = std::env::args().collect();
     let paths = Paths::from_env();

@@ -1,8 +1,3 @@
-//! Windows. Windows has no primary selection, so a capture copies the selection with a
-//! simulated Ctrl+C and then puts the clipboard back. Double Shift is detected with a
-//! low-level keyboard hook, Win+C (or Ctrl+Alt+C if Windows reserves it) shows Patina, and a
-//! tray icon offers show and quit.
-
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
@@ -88,7 +83,6 @@ fn tray(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Patina starts with Windows by default. Done once, so a user who turns it off stays off.
 fn enable_autostart_once(app: &AppHandle) {
     let marker = app.state::<crate::app::AppState>().paths.data.join(AUTOSTART_MARKER);
     if marker.exists() {
@@ -103,19 +97,47 @@ fn enable_autostart_once(app: &AppHandle) {
 #[derive(Default)]
 struct Taps {
     shift_down: bool,
-    /// No other key was pressed since Shift went down.
-    clean: bool,
+    only_shift_since_press: bool,
     last: Option<Instant>,
 }
 
-static TAPS: Mutex<Taps> = Mutex::new(Taps { shift_down: false, clean: false, last: None });
+impl Taps {
+    fn press_shift(&mut self) {
+        if !self.shift_down {
+            self.shift_down = true;
+            self.only_shift_since_press = true;
+        }
+    }
+
+    fn release_shift(&mut self) -> bool {
+        self.shift_down = false;
+        if !self.only_shift_since_press {
+            return false;
+        }
+        match self.last {
+            Some(last) if last.elapsed() < DOUBLE_TAP => {
+                self.last = None;
+                true
+            }
+            _ => {
+                self.last = Some(Instant::now());
+                false
+            }
+        }
+    }
+
+    fn press_other(&mut self) {
+        self.only_shift_since_press = false;
+        self.last = None;
+    }
+}
+
+static TAPS: Mutex<Taps> = Mutex::new(Taps { shift_down: false, only_shift_since_press: false, last: None });
 
 fn is_shift(vk: u32) -> bool {
     [VK_SHIFT, VK_LSHIFT, VK_RSHIFT].iter().any(|k| k.0 as u32 == vk)
 }
 
-/// Two Shift taps within 350 ms, with no other key in between, trigger a capture. Typing a
-/// capital letter presses another key while Shift is down, so it doesn't count.
 unsafe extern "system" fn on_key(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     if code >= 0 {
         let key = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
@@ -125,27 +147,16 @@ unsafe extern "system" fn on_key(code: i32, wparam: WPARAM, lparam: LPARAM) -> L
             let up = message == WM_KEYUP || message == WM_SYSKEYUP;
             let mut taps = TAPS.lock().unwrap();
             if is_shift(key.vkCode) {
-                if down && !taps.shift_down {
-                    taps.shift_down = true;
-                    taps.clean = true;
-                } else if up {
-                    taps.shift_down = false;
-                    if taps.clean {
-                        match taps.last {
-                            Some(last) if last.elapsed() < DOUBLE_TAP => {
-                                taps.last = None;
-                                if let Some(app) = APP.get() {
-                                    let app = app.clone();
-                                    std::thread::spawn(move || crate::app::capture(&app));
-                                }
-                            }
-                            _ => taps.last = Some(Instant::now()),
-                        }
+                if down {
+                    taps.press_shift();
+                } else if up && taps.release_shift() {
+                    if let Some(app) = APP.get() {
+                        let app = app.clone();
+                        std::thread::spawn(move || crate::app::capture(&app));
                     }
                 }
             } else if down {
-                taps.clean = false;
-                taps.last = None;
+                taps.press_other();
             }
         }
     }
@@ -170,11 +181,10 @@ pub fn active_window() -> Window {
         let len = GetWindowTextW(hwnd, &mut title).max(0) as usize;
         let mut pid = 0u32;
         GetWindowThreadProcessId(hwnd, Some(&mut pid));
-        Window { class: process_name(pid).unwrap_or_default(), title: String::from_utf16_lossy(&title[..len]) }
+        Window { app_id: process_name(pid).unwrap_or_default(), title: String::from_utf16_lossy(&title[..len]) }
     }
 }
 
-/// The executable name without extension ("brave", "Code"), the closest thing to a window class.
 fn process_name(pid: u32) -> Option<String> {
     unsafe {
         let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
@@ -203,8 +213,6 @@ fn key(vk: VIRTUAL_KEY, up: bool) -> INPUT {
     }
 }
 
-/// Copies the selection of the focused app with Ctrl+C and restores the clipboard. None when
-/// the app didn't copy anything (nothing selected).
 fn copy_selection() -> Option<String> {
     let mut clipboard = arboard::Clipboard::new().ok()?;
     let saved_text = clipboard.get_text().ok();
@@ -233,7 +241,7 @@ fn copy_selection() -> Option<String> {
 
 pub fn selection(_clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
     match copy_selection() {
-        Some(text) if !text.trim().is_empty() => (text, SelectionClock { changed_at: epoch_seconds(), captured_at: 0.0 }),
+        Some(text) if !text.trim().is_empty() => (text, SelectionClock { changed_at: Some(epoch_seconds()), captured_at: None }),
         _ => (String::new(), SelectionClock::default()),
     }
 }
@@ -248,8 +256,6 @@ pub fn notify(app: &AppHandle, summary: &str, body: &str) {
     let _ = app.notification().builder().title(summary).body(body).show();
 }
 
-/// Registers the native messaging host for Chrome, Brave, Chromium and Edge. Each browser reads
-/// a registry key pointing to the manifest file.
 fn register_native_host() -> std::io::Result<()> {
     use winreg::enums::HKEY_CURRENT_USER;
     let dir = dirs::data_local_dir().unwrap_or_else(std::env::temp_dir).join("Patina");

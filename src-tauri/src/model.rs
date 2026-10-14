@@ -8,8 +8,6 @@ pub enum Kind {
     Capture,
 }
 
-/// Where a capture came from. On a WhatsApp message: sender, send time and chat.
-/// On a web page: url, title, host and the favicon file name.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Context {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -28,8 +26,6 @@ pub struct Context {
     pub favicon: Option<String>,
 }
 
-/// A queue or history entry. The JSON shape is the one the Python version wrote to
-/// items.json and historial.json; unknown keys are kept so no data is lost on save.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Item {
     pub id: String,
@@ -45,7 +41,7 @@ pub struct Item {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub archived: Option<String>,
     #[serde(flatten)]
-    pub other: Map<String, Value>,
+    pub unknown_fields: Map<String, Value>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -54,7 +50,6 @@ pub struct Message {
     pub sender: String,
 }
 
-/// The latest selection the browser extension reported (patina-selection.json).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Selection {
@@ -69,8 +64,6 @@ pub struct Selection {
     pub received: f64,
 }
 
-/// The browser's active tab (patina-page.json). `since` is when this tab and URL became
-/// active; a title change keeps it.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Page {
@@ -80,7 +73,8 @@ pub struct Page {
     pub host: String,
     pub title: String,
     pub favicon: String,
-    pub since: f64,
+    #[serde(rename = "since")]
+    pub active_since: f64,
     pub received: f64,
 }
 
@@ -100,9 +94,41 @@ pub fn non_empty(s: &str) -> Option<String> {
     (!s.is_empty()).then(|| s.to_string())
 }
 
-/// The window that had focus when the capture was requested.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Window {
-    pub class: String,
+    pub app_id: String,
     pub title: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Item, Page, Selection};
+
+    #[test]
+    fn page_keeps_since_on_disk() {
+        let raw = r#"{"kind":"page","tab":"7","url":"https://example.com/","host":"example.com","title":"Example","favicon":"","since":123.0,"received":124.0}"#;
+        let page: Page = serde_json::from_str(raw).unwrap();
+        assert_eq!(page.active_since, 123.0);
+        assert_eq!(serde_json::to_string(&page).unwrap(), raw);
+    }
+
+    #[test]
+    fn selection_keeps_date_order_strings_on_disk() {
+        for order in ["", "dmy", "mdy", "ymd"] {
+            let raw = format!(
+                r#"{{"text":"hello","url":"","host":"","title":"","favicon":"","messages":[],"chat":"","date_order":"{order}","received":123.0}}"#
+            );
+            let selection: Selection = serde_json::from_str(&raw).unwrap();
+            assert_eq!(selection.date_order, order);
+            assert_eq!(serde_json::to_string(&selection).unwrap(), raw);
+        }
+    }
+
+    #[test]
+    fn item_keeps_unknown_fields_on_disk() {
+        let raw = r#"{"id":"a1","kind":"capture","text":"hello","source":"foot","created":"2026-10-13T20:42:00","done":false,"custom":{"nested":true}}"#;
+        let item: Item = serde_json::from_str(raw).unwrap();
+        assert_eq!(item.unknown_fields["custom"], serde_json::json!({"nested": true}));
+        assert_eq!(serde_json::to_string(&item).unwrap(), raw);
+    }
 }

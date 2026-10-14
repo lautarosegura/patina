@@ -1,7 +1,3 @@
-//! The Tauri app: one long-running instance that owns the data, a hidden window it shows on
-//! demand, and the commands the web UI calls. Later invocations (`patina`, `patina capture`,
-//! `patina add …`) reach the running instance through the single-instance plugin.
-
 use std::sync::{Arc, Mutex};
 
 use base64::Engine;
@@ -111,7 +107,7 @@ pub fn capture(app: &AppHandle) {
     let decision = decide_capture(&input, &|name| favicons.join(name).exists());
     let applied = apply_capture(&mut state.store.lock().unwrap(), decision, &window_source(&window));
     if applied.consumed {
-        state.clock.lock().unwrap().captured_at = now;
+        state.clock.lock().unwrap().captured_at = Some(now);
     }
     if let Some((summary, body)) = applied.notice {
         platform::notify(app, &summary, &body);
@@ -175,10 +171,9 @@ fn save_notes(state: Ui, text: String) {
 }
 
 #[tauri::command]
-fn copy_text(app: AppHandle, text: String, hide: bool) {
+fn copy_text(app: AppHandle, text: String, hide_after_copy: bool) {
     platform::copy(&app, &text);
-    if hide {
-        // Back to the app where the text will be pasted.
+    if hide_after_copy {
         let _ = main_window(&app).hide();
     }
 }
@@ -196,12 +191,9 @@ fn open_url(app: AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
 }
 
-/// The favicon file as a data URL. Names come from the item data, so only the hashed file
-/// names the host writes are accepted.
 #[tauri::command]
 fn favicon_url(state: Ui, name: String) -> Option<String> {
-    let valid = name.len() == 24 && name.ends_with(".png") && name[..20].bytes().all(|b| b.is_ascii_hexdigit());
-    if !valid {
+    if !crate::logic::is_favicon_file_name(&name) {
         return None;
     }
     let png = std::fs::read(state.paths.favicons.join(&name)).ok()?;
@@ -263,7 +255,6 @@ pub fn run(paths: Paths, command: Command) {
         .build(tauri::generate_context!())
         .expect("Patina no pudo arrancar");
     app.run(|_app, event| {
-        // The window only hides; Patina keeps running until it is killed or quit from the tray.
         if let tauri::RunEvent::ExitRequested { api, code: None, .. } = event {
             api.prevent_exit();
         }

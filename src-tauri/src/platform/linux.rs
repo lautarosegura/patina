@@ -1,7 +1,3 @@
-//! Linux with Hyprland. Hyprland runs `patina tap` on every Shift release and `patina` for
-//! Super+C (hypr/patina.lua). The selection is Wayland's primary selection, read and watched
-//! with wl-clipboard.
-
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -30,12 +26,11 @@ pub fn start(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Runs a command and returns its stdout, or "" if it fails or takes more than 2 seconds.
-fn output(program: &str, args: &[&str]) -> String {
+fn stdout_or_empty(program: &str, args: &[&str], timeout: Duration) -> String {
     let Ok(mut child) = Command::new(program).args(args).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() else {
         return String::new();
     };
-    let deadline = Instant::now() + Duration::from_secs(2);
+    let deadline = Instant::now() + timeout;
     loop {
         match child.try_wait() {
             Ok(Some(_)) => break,
@@ -53,23 +48,33 @@ fn output(program: &str, args: &[&str]) -> String {
 }
 
 pub fn active_window() -> Window {
-    let raw = output("hyprctl", &["activewindow", "-j"]);
+    let raw = stdout_or_empty("hyprctl", &["activewindow", "-j"], Duration::from_secs(2));
     let json: serde_json::Value = serde_json::from_str(&raw).unwrap_or_default();
     let field = |k: &str| json.get(k).and_then(|v| v.as_str()).unwrap_or_default().to_string();
-    Window { class: field("class"), title: field("title") }
+    Window { app_id: field("class"), title: field("title") }
 }
 
 pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
-    (output("wl-paste", &["--primary", "--no-newline", "--type", "text"]), *clock.lock().unwrap())
+    (
+        stdout_or_empty("wl-paste", &["--primary", "--no-newline", "--type", "text"], Duration::from_secs(2)),
+        *clock.lock().unwrap(),
+    )
 }
 
-/// Notes when the primary selection changes. wl-paste uses the data-control protocol, so it
-/// works while Patina doesn't have focus. The selection that already exists at start doesn't
-/// count as new.
+fn consume_initial_selection(reader: &mut impl BufRead, clock: &Mutex<SelectionClock>) -> bool {
+    let mut line = String::new();
+    if !reader.read_line(&mut line).is_ok_and(|read| read > 0) {
+        return false;
+    }
+    let mut clock = clock.lock().unwrap();
+    clock.changed_at = Some(epoch_seconds());
+    clock.captured_at = clock.changed_at;
+    true
+}
+
 fn watch_primary(clock: Arc<Mutex<SelectionClock>>) {
     let mut command = Command::new("wl-paste");
     command.args(["--primary", "--watch", "echo"]).stdout(Stdio::piped()).stderr(Stdio::null());
-    // The watcher dies with Patina instead of being left behind.
     unsafe {
         command.pre_exec(|| {
             libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM);
@@ -82,15 +87,13 @@ fn watch_primary(clock: Arc<Mutex<SelectionClock>>) {
     };
     let stdout = child.stdout.take().unwrap();
     std::thread::spawn(move || {
-        for line in BufReader::new(stdout).lines() {
-            if line.is_err() {
-                break;
-            }
-            let mut clock = clock.lock().unwrap();
-            let first = clock.changed_at == 0.0;
-            clock.changed_at = epoch_seconds();
-            if first {
-                clock.captured_at = clock.changed_at;
+        let mut reader = BufReader::new(stdout);
+        if consume_initial_selection(&mut reader, &clock) {
+            for line in reader.lines() {
+                if line.is_err() {
+                    break;
+                }
+                clock.lock().unwrap().changed_at = Some(epoch_seconds());
             }
         }
         let _ = child.wait();
@@ -123,9 +126,6 @@ fn monotonic_ms() -> u64 {
     ts.tv_sec as u64 * 1000 + ts.tv_nsec as u64 / 1_000_000
 }
 
-/// Called by Hyprland on every Shift release. Two releases within 350 ms run `patina capture`.
-/// The last tap is kept in a file because every tap is a new process; this path doesn't start
-/// Tauri so it stays cheap.
 pub fn tap(paths: &Paths) {
     let now = monotonic_ms();
     let last: u64 = std::fs::read_to_string(&paths.shift_stamp).ok().and_then(|s| s.trim().parse().ok()).unwrap_or(0);
@@ -149,7 +149,6 @@ fn host_executable() -> std::io::Result<PathBuf> {
     }
 }
 
-/// Registers the native messaging host for every Chromium-based browser that is installed.
 fn register_native_host() -> std::io::Result<()> {
     let manifest = super::host_manifest(&host_executable()?);
     let config = dirs::config_dir().unwrap_or_default();

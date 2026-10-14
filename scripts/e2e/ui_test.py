@@ -1,6 +1,3 @@
-"""Recorre la interfaz real de Patina (binario de Tauri) en un Sway sin pantalla y verifica el
-efecto de cada acción en los archivos de datos y el portapapeles. Lo lanza run.sh."""
-
 import json
 import os
 import subprocess
@@ -51,8 +48,7 @@ def history():
     return json.load(open(os.path.join(DATA, "historial.json")))
 
 
-def window():
-    """Rect and visibility of the Patina window in the Sway tree, or None if unmapped."""
+def patina_window():
     def walk(node):
         if node.get("app_id") == "patina":
             return node
@@ -87,7 +83,7 @@ def pointer(command):
 
 
 def hover(x, y):
-    r = window()["rect"]
+    r = patina_window()["rect"]
     pointer(f"move {r['x'] + x} {r['y'] + y}")
     time.sleep(0.5)
 
@@ -104,12 +100,11 @@ def keys(*args):
 
 
 def shot(name):
-    r = window()["rect"]
+    r = patina_window()["rect"]
     sh("grim", "-g", f"{r['x']},{r['y']} {r['width']}x{r['height']}", f"{OUT}/{name}.png")
 
 
 def red_png(size):
-    """A solid red square, so the screenshot shows whether favicons render."""
     import struct
     import zlib
     rows = b"".join(b"\0" + b"\xff\x00\x00\xff" * size for _ in range(size))
@@ -132,8 +127,8 @@ open(os.path.join(DATA, "favicons", "3aeb002460381c6f258e.png"), "wb").write(red
 service = subprocess.Popen([BIN, "--service"], stdout=open(f"{OUT}/patina.log", "w"), stderr=subprocess.STDOUT)
 time.sleep(2)
 subprocess.run([BIN])
-check("Super+C (patina) muestra la ventana flotante 560x680", wait_for(lambda: window() is not None)
-      and window()["rect"]["width"] == 560 and window()["rect"]["height"] == 680, str(window() and window()["rect"]))
+check("Super+C (patina) muestra la ventana flotante 560x680", wait_for(lambda: patina_window() is not None)
+      and patina_window()["rect"]["width"] == 560 and patina_window()["rect"]["height"] == 680, str(patina_window() and patina_window()["rect"]))
 time.sleep(1.5)
 shot("01-cola")
 
@@ -143,7 +138,7 @@ check("al mostrarse el foco está en la entrada y Enter agrega el prompt",
       wait_for(lambda: items()[-1]["text"] == "nuevo prompt desde la UI"), items()[-1]["text"])
 
 click(37, 128)
-check("click en el checkbox tacha sin cerrar", wait_for(lambda: items()[0]["done"]) and window() is not None)
+check("click en el checkbox tacha sin cerrar", wait_for(lambda: items()[0]["done"]) and patina_window() is not None)
 
 copy("marcador")
 hover(300, 207)
@@ -152,18 +147,18 @@ click(491, 195)
 time.sleep(0.15)
 shot("03-copiado")
 check("botón Copiar copia sin tachar ni cerrar", clipboard() == ITEMS[1]["text"] and not items()[1]["done"]
-      and window() is not None, repr(clipboard()))
+      and patina_window() is not None, repr(clipboard()))
 
 copy("marcador")
 click(100, 290)
-check("un click en el texto solo selecciona", clipboard() == "marcador" and window() is not None, repr(clipboard()))
+check("un click en el texto solo selecciona", clipboard() == "marcador" and patina_window() is not None, repr(clipboard()))
 
 click(100, 290, count=2)
-check("doble click copia y oculta, sin tachar", wait_for(lambda: window() is None) and clipboard() == ITEMS[2]["text"]
+check("doble click copia y oculta, sin tachar", wait_for(lambda: patina_window() is None) and clipboard() == ITEMS[2]["text"]
       and not items()[2]["done"], repr(clipboard()))
 
 subprocess.run([BIN])
-wait_for(lambda: window() is not None)
+wait_for(lambda: patina_window() is not None)
 time.sleep(0.8)
 keys("-M", "ctrl", "-k", "3", "-m", "ctrl")
 shot("04-historial")
@@ -193,7 +188,7 @@ time.sleep(0.8)
 shot("06-captura-externa")
 
 keys("-k", "Escape")
-check("Esc oculta la ventana", wait_for(lambda: window() is None))
+check("Esc oculta la ventana", wait_for(lambda: patina_window() is None))
 check("el servicio sigue vivo después de ocultar", service.poll() is None)
 
 service.terminate()

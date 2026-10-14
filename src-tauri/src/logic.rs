@@ -1,6 +1,3 @@
-//! Pure capture logic, shared by both platforms. The platform layer gathers the inputs
-//! (selection text, focused window, extension files, clock) and applies the result.
-
 use std::sync::LazyLock;
 
 use chrono::NaiveDate;
@@ -9,7 +6,6 @@ use sha2::{Digest, Sha256};
 
 use crate::model::{non_empty, Context, Page, Selection, Window};
 
-/// Selections the extension reported more than 10 minutes ago are ignored.
 pub const SELECTION_MAX_AGE_S: f64 = 600.0;
 /// A primary selection that wasn't captured within 10 seconds counts as gone: on Wayland it
 /// stays available even after nothing looks selected on screen.
@@ -30,18 +26,46 @@ pub fn favicon_name(host: &str) -> String {
     format!("{}.png", &hex[..20])
 }
 
+pub fn is_favicon_file_name(name: &str) -> bool {
+    name.len() == 24 && name.ends_with(".png") && name[..20].bytes().all(|b| b.is_ascii_hexdigit())
+}
+
 pub fn window_source(window: &Window) -> String {
     if let Some(m) = WHATSAPP_TITLE.captures(&window.title) {
         return m[1].to_string();
     }
-    // "com.t3tools.T3Code" -> "T3Code"; simple classes stay the same.
-    window.class.rsplit('.').next().unwrap_or_default().to_string()
+    window.app_id.rsplit('.').next().unwrap_or_default().to_string()
 }
 
-/// WhatsApp's send time ("20:27, 13/10/2026" or "8:27 PM, 10/13/2026") as "YYYY-MM-DDTHH:MM".
-/// The format follows the browser language; the extension sends the date order. Without it, a
-/// number above 12 decides, otherwise day/month is assumed. Empty if it can't be parsed.
-pub fn parse_sent(raw: &str, order: &str) -> String {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DateOrder {
+    Dmy,
+    Mdy,
+    Ymd,
+}
+
+impl DateOrder {
+    pub fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "dmy" => Some(Self::Dmy),
+            "mdy" => Some(Self::Mdy),
+            "ymd" => Some(Self::Ymd),
+            _ => None,
+        }
+    }
+
+    fn infer(first: u32, second: u32) -> Self {
+        if first > 31 {
+            Self::Ymd
+        } else if second > 12 {
+            Self::Mdy
+        } else {
+            Self::Dmy
+        }
+    }
+}
+
+pub fn parse_sent(raw: &str, order: Option<DateOrder>) -> String {
     let (Some(t), Some(d)) = (SENT_TIME.captures(raw), SENT_DATE.captures(raw)) else {
         return String::new();
     };
@@ -51,16 +75,10 @@ pub fn parse_sent(raw: &str, order: &str) -> String {
         hour = hour % 12 + if ampm.as_str().eq_ignore_ascii_case("p") { 12 } else { 0 };
     }
     let (a, b, c) = (num(&d[1]), num(&d[2]), num(&d[3]));
-    let order = match order {
-        "dmy" | "mdy" | "ymd" => order,
-        _ if a > 31 => "ymd",
-        _ if b > 12 => "mdy",
-        _ => "dmy",
-    };
-    let (year, month, day) = match order {
-        "dmy" => (c, b, a),
-        "mdy" => (c, a, b),
-        _ => (a, b, c),
+    let (year, month, day) = match order.unwrap_or_else(|| DateOrder::infer(a, b)) {
+        DateOrder::Dmy => (c, b, a),
+        DateOrder::Mdy => (c, a, b),
+        DateOrder::Ymd => (a, b, c),
     };
     let year = if year > 99 { year } else { 2000 + year };
     NaiveDate::from_ymd_opt(year as i32, month, day)
@@ -77,8 +95,7 @@ fn recent(selection: &Selection, now: f64) -> bool {
     now - selection.received <= SELECTION_MAX_AGE_S
 }
 
-/// The text as the extension built it, when it has the same characters as the captured
-/// selection apart from whitespace. Chromium breaks lines around inline-flex elements such as X
+/// Chromium breaks lines around inline-flex elements such as X
 /// mentions ("asking \n@bot\n:"); the extension keeps them as they look.
 pub fn page_text(text: &str, selection: Option<&Selection>, now: f64) -> String {
     match selection {
@@ -87,12 +104,6 @@ pub fn page_text(text: &str, selection: Option<&Selection>, now: f64) -> String 
     }
 }
 
-/// Where the captured text came from, in this order:
-/// 1. The selection the extension reported, if it is this text: the WhatsApp sender, time and
-///    chat, or the page url, title and favicon.
-/// 2. The browser's active tab, if it belongs to the focused window. Covers what isn't selected
-///    inside a page, such as the URL in the address bar.
-/// 3. If the text is a URL, that URL (with its domain's saved favicon, if any).
 pub fn browser_context(
     text: &str,
     window_title: &str,
@@ -143,7 +154,7 @@ pub fn browser_context(
         }
     }
     let raw_sent = &selection.messages[0].time;
-    let sent = match parse_sent(raw_sent, &selection.date_order) {
+    let sent = match parse_sent(raw_sent, DateOrder::parse(&selection.date_order)) {
         parsed if parsed.is_empty() => raw_sent.clone(),
         parsed => parsed,
     };
@@ -157,22 +168,18 @@ pub fn browser_context(
     }
 }
 
-/// The browser titles its window "<tab title> - <browser>".
 fn on_page(window_title: &str, page: &Page) -> bool {
     !page.title.is_empty() && window_title.starts_with(&format!("{} - ", page.title))
 }
 
-/// When the current selection appeared and when the last capture consumed one. Zero means
-/// unknown: without a way to watch the selection, every selection counts as fresh.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SelectionClock {
-    pub changed_at: f64,
-    pub captured_at: f64,
+    pub changed_at: Option<f64>,
+    pub captured_at: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Capture {
-    /// Nothing new is selected in a browser window: capture the active tab.
     Page(Page),
     Text { text: String, context: Context },
     Nothing,
@@ -187,19 +194,24 @@ pub struct CaptureInput<'a> {
     pub selection: Option<&'a Selection>,
 }
 
+fn selection_cleared_on(selection: &Selection, page: &Page, changed_at: Option<f64>) -> bool {
+    selection.received > changed_at.unwrap_or(0.0) && selection.url == page.url && selection.text.trim().is_empty()
+}
+
 pub fn decide_capture(input: &CaptureInput, favicon_exists: &dyn Fn(&str) -> bool) -> Capture {
     let CaptureInput { selection_text, clock, now, window, page, selection } = *input;
     let changed = clock.changed_at;
-    let mut fresh = changed == 0.0 || (changed > clock.captured_at && now - changed <= PRIMARY_MAX_AGE_S);
+    let mut fresh = changed.map_or(true, |changed| {
+        changed > clock.captured_at.unwrap_or(0.0) && now - changed <= PRIMARY_MAX_AGE_S
+    });
     let page = page.filter(|p| on_page(&window.title, p));
     if let Some(page) = page {
-        // The extension reports when the page selection becomes empty (a click elsewhere).
-        if selection.is_some_and(|s| s.received > changed && s.url == page.url && s.text.trim().is_empty()) {
+        if selection.is_some_and(|s| selection_cleared_on(s, page, changed)) {
             fresh = false;
         }
         // Selected before this tab became active: the browser doesn't update the selection
         // when the address bar is clicked.
-        if changed != 0.0 && page.since > changed {
+        if changed.is_some_and(|changed| page.active_since > changed) {
             fresh = false;
         }
     }
@@ -216,7 +228,6 @@ pub fn decide_capture(input: &CaptureInput, favicon_exists: &dyn Fn(&str) -> boo
     }
 }
 
-/// The notification shown after a capture: (summary, body).
 pub fn capture_notice(text: &str, sender: Option<&str>) -> (String, String) {
     let preview: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
     let mut body: String = preview.chars().take(120).collect();
@@ -231,9 +242,7 @@ pub fn capture_notice(text: &str, sender: Option<&str>) -> (String, String) {
 }
 
 pub struct Applied {
-    /// (summary, body) to show, if any.
     pub notice: Option<(String, String)>,
-    /// A text capture consumes the selection: it won't be captured again.
     pub consumed: bool,
 }
 

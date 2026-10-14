@@ -68,17 +68,16 @@ function mutate(name, args = {}, after) {
   });
 }
 
-function caseFold(text) {
-  // Python casefold expands sharp S and ligatures but preserves dotless i.
+function pythonCasefold(text) {
   return Array.from(text.toLowerCase(), (character) =>
     character === 'ı' ? character : character.toUpperCase().toLowerCase()).join('');
 }
 
 function visibleItems(tab) {
   if (tab === 'queue') return state.items;
-  const query = caseFold(search.value.trim());
+  const query = pythonCasefold(search.value.trim());
   return [...state.history].reverse().filter((item) => !query ||
-    caseFold(['text', 'source', 'sender', 'chat', 'host', 'title']
+    pythonCasefold(['text', 'source', 'sender', 'chat', 'host', 'title']
       .map((key) => item[key] || '').join(' ')).includes(query));
 }
 
@@ -209,7 +208,7 @@ function copyButton(item) {
   button.addEventListener('click', (event) => {
     event.stopPropagation();
     void run(async () => {
-      await invoke('copy_text', { text: item.text, hide: false });
+      await invoke('copy_text', { text: item.text, hideAfterCopy: false });
       copiedUntil.set(item.id, Date.now() + 1400);
       clearTimeout(copyTimers.get(item.id));
       showCopied(item.id);
@@ -257,7 +256,7 @@ function row(item, tab, index) {
   }
   node.addEventListener('click', () => select(tab, index));
   node.addEventListener('focus', () => select(tab, index, false));
-  node.addEventListener('dblclick', () => void run(() => invoke('copy_text', { text: item.text, hide: true })));
+  node.addEventListener('dblclick', () => void run(() => invoke('copy_text', { text: item.text, hideAfterCopy: true })));
   return node;
 }
 
@@ -288,7 +287,7 @@ function listKey(event, tab) {
   const key = event.key.toLowerCase();
   const ctrl = event.ctrlKey;
   if (event.key === 'Enter' || ctrl && key === 'c') {
-    void run(() => invoke('copy_text', { text: item.text, hide: true }));
+    void run(() => invoke('copy_text', { text: item.text, hideAfterCopy: true }));
   } else if (tab === 'queue' && event.key === ' ') {
     void mutate('set_done', { id: item.id, done: !item.done });
   } else if (event.key === 'Delete' || event.key === 'Backspace') {

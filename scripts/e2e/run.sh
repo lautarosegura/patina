@@ -1,7 +1,5 @@
 #!/bin/sh
-# Prueba de interfaz de Patina en Linux, aislada: Sway sin pantalla dentro del contenedor de build,
-# con su propio D-Bus y portapapeles. Uso (desde el repo): scripts/in-container.sh scripts/e2e/run.sh
-# Las capturas quedan en scripts/e2e/out/.
+# Uso (desde el repo): scripts/in-container.sh scripts/e2e/run.sh
 set -eu
 cd "$(dirname "$0")"
 export XDG_RUNTIME_DIR=/tmp/e2e-runtime XDG_DATA_HOME=/tmp/e2e-data

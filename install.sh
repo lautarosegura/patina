@@ -1,10 +1,10 @@
 #!/bin/sh
-# Instala Patina para el usuario actual. No usa sudo ni toca la configuración de Hyprland:
-# al final indica la línea a agregar.
+# Instala Patina para el usuario actual desde este clon del repo: el comando es un enlace al
+# archivo del repo y la extensión y la configuración de Hyprland se usan desde acá. Si movés o
+# borrás el clon, volvé a correr install.sh. No usa sudo ni toca la configuración de Hyprland.
 set -eu
 
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
-SHARE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/patina"
 HOST_NAME="io.github.lautarosegura.patina"
 EXTENSION_ID="fedemognlmdojgmeinfhhjliccpfncdo"  # deriva de la clave en extension/manifest.json
 SRC="$(cd "$(dirname "$0")" && pwd)"
@@ -21,11 +21,8 @@ if [ -n "$missing" ]; then
     exit 1
 fi
 
-install -Dm755 "$SRC/patina" "$BIN_DIR/patina"
-mkdir -p "$SHARE_DIR/extension"
-cp "$SRC"/extension/*.json "$SRC"/extension/*.js "$SHARE_DIR/extension/"
-sed "s|@BIN@|$BIN_DIR/patina|g" "$SRC/hypr/patina.lua" > "$SHARE_DIR/hyprland.lua"
-sed "s|@BIN@|$BIN_DIR/patina|g" "$SRC/hypr/patina.conf" > "$SHARE_DIR/hyprland.conf"
+mkdir -p "$BIN_DIR"
+ln -sfn "$SRC/patina" "$BIN_DIR/patina"
 
 # Host nativo de la extensión, para cada navegador Chromium que esté instalado.
 hosts=""
@@ -51,16 +48,18 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
         || hyprctl dispatch exec "$BIN_DIR/patina --service" >/dev/null 2>&1 || true
 fi
 
+extra=""
+[ "$BIN_DIR" = "$HOME/.local/bin" ] || extra="PATINA_BIN = \"$BIN_DIR/patina\"; "
 cat <<MSG
-Patina instalado en $BIN_DIR/patina
+Patina instalado: $BIN_DIR/patina -> $SRC/patina
 
 1. Hyprland: agregá al final de tu configuración
-   hyprland.lua:  dofile(os.getenv("HOME") .. "/.local/share/patina/hyprland.lua")
-   hyprland.conf: source = $SHARE_DIR/hyprland.conf
+   hyprland.lua:  ${extra}dofile("$SRC/hypr/patina.lua")
+   hyprland.conf: source = $SRC/hypr/patina.conf
    y recargá con: hyprctl reload
 
 2. Extensión del navegador (opcional, para guardar la página, el favicon y el remitente de WhatsApp):
    abrí brave://extensions (o chrome://extensions), activá el modo de desarrollador,
-   "Cargar extensión sin empaquetar" y elegí: $SHARE_DIR/extension
+   "Cargar extensión sin empaquetar" y elegí: $SRC/extension
 MSG
 [ -n "$hosts" ] && printf "   Host nativo instalado en:$hosts\n" || echo "   (No encontré Brave, Chrome ni Chromium: el host nativo no se instaló)"

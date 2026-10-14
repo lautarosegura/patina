@@ -1,8 +1,9 @@
--- Patina en Hyprland (configuración en Lua). install.sh copia este archivo a
--- ~/.local/share/patina/hyprland.lua; incluilo al final de ~/.config/hypr/hyprland.lua con:
---   dofile(os.getenv("HOME") .. "/.local/share/patina/hyprland.lua")
+-- Patina en Hyprland (configuración en Lua). Incluilo al final de ~/.config/hypr/hyprland.lua
+-- con la ruta a tu clon del repo, por ejemplo:
+--   dofile(os.getenv("HOME") .. "/code/patina/hypr/patina.lua")
+-- Si instalaste el comando en otro lugar que ~/.local/bin, definí antes PATINA_BIN = "/ruta/patina".
 
-local patina = "@BIN@"
+local patina = PATINA_BIN or (os.getenv("HOME") .. "/.local/bin/patina")
 
 -- Doble Shift captura la selección. La liberación de Shift no se consume:
 -- Shift sigue funcionando normal en las apps.

@@ -38,21 +38,23 @@ cd patina
 ./install.sh
 ```
 
-`install.sh` instala `patina` en `~/.local/bin`, copia la extensión y la configuración de Hyprland a `~/.local/share/patina` y registra el host nativo en los navegadores Chromium que encuentre. No usa `sudo` ni modifica tu configuración.
+`install.sh` crea `~/.local/bin/patina` como enlace al archivo del repo y registra el host nativo en los navegadores Chromium que encuentre. La extensión y la configuración de Hyprland se usan directamente desde el clon, así que conservalo: si lo movés, volvé a correr `install.sh` y actualizá las rutas. No usa `sudo` ni modifica tu configuración.
 
 ### Hyprland
 
-Agregá al final de tu configuración y recargá con `hyprctl reload`:
+Agregá al final de tu configuración la ruta a tu clon (`install.sh` te la muestra) y recargá con `hyprctl reload`:
 
 ```lua
 -- ~/.config/hypr/hyprland.lua
-dofile(os.getenv("HOME") .. "/.local/share/patina/hyprland.lua")
+dofile(os.getenv("HOME") .. "/code/patina/hypr/patina.lua")
 ```
 
 ```ini
 # ~/.config/hypr/hyprland.conf (sin probar)
-source = ~/.local/share/patina/hyprland.conf
+source = ~/code/patina/hypr/patina.conf
 ```
+
+Si instalaste el comando en otra carpeta con `BIN_DIR=... ./install.sh`, definí `PATINA_BIN = "/ruta/patina"` antes del `dofile`.
 
 Eso agrega el doble Shift, **Super+C** para mostrar u ocultar Patina, la regla de ventana flotante y el arranque al iniciar sesión.
 
@@ -60,7 +62,7 @@ Eso agrega el doble Shift, **Super+C** para mostrar u ocultar Patina, la regla d
 
 1. Abrí `brave://extensions` o `chrome://extensions`.
 2. Activá el **modo de desarrollador**.
-3. Tocá **Cargar extensión sin empaquetar** y elegí `~/.local/share/patina/extension`.
+3. Tocá **Cargar extensión sin empaquetar** y elegí la carpeta `extension/` de tu clon.
 4. Recargá las pestañas que ya tenías abiertas.
 
 La extensión pide estos permisos:
@@ -97,6 +99,14 @@ Desde la terminal, `patina add "texto"` agrega un prompt y `patina capture` capt
 - `~/.local/share/patina/`: `items.json` (la cola), `historial.json`, `notas.md` y `favicons/`.
 - `$XDG_RUNTIME_DIR/patina-*.json`: la última selección y la pestaña activa que mandó la extensión. Son archivos en memoria, con permisos `0600`, que se borran al cerrar la sesión.
 
+## Desarrollo
+
+Como el comando, la extensión y la configuración apuntan al clon, los cambios se usan directamente:
+
+- **`patina`:** reiniciá el servicio con `pkill -f "patina --service"; patina --service &`.
+- **`extension/`:** recargala en `brave://extensions`.
+- **`hypr/`:** corré `hyprctl reload`.
+
 ## Cómo funciona
 
 - **Un solo programa:** `patina` es un único archivo Python con GTK 4 y libadwaita. Queda corriendo oculto (`patina --service`), y los demás comandos le llegan por D-Bus.
@@ -109,7 +119,7 @@ Desde la terminal, `patina add "texto"` agrega un prompt y `patina capture` capt
 ## Desinstalar
 
 ```sh
-./uninstall.sh          # conserva tus datos
+./uninstall.sh          # quita el comando y el host nativo; conserva tus datos
 ./uninstall.sh --purge  # borra también ~/.local/share/patina
 ```
 

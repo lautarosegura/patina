@@ -1,5 +1,5 @@
 #!/bin/sh
-# Desinstala Patina. Tus capturas y notas quedan en ~/.local/share/patina salvo que pases --purge.
+# Uninstalls Patina. Your captures and notes stay in ~/.local/share/patina unless you pass --purge.
 set -eu
 
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
@@ -13,8 +13,8 @@ for dir in "$HOME/.config/BraveSoftware/Brave-Browser" "$HOME/.config/google-chr
 done
 if [ "${1:-}" = "--purge" ]; then
     rm -rf "$DATA_DIR"
-    echo "Patina desinstalado, incluidos tus datos."
+    echo "Patina uninstalled, including your data."
 else
-    echo "Patina desinstalado. Tus datos siguen en $DATA_DIR (usá --purge para borrarlos)."
+    echo "Patina uninstalled. Your data is still in $DATA_DIR (use --purge to delete it)."
 fi
-echo "Quitá también la línea de Patina de tu configuración de Hyprland y la extensión del navegador."
+echo "Also remove the Patina line from your Hyprland config and the browser extension."

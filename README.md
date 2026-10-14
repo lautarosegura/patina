@@ -1,36 +1,55 @@
 # Patina
 
-Cola de prompts, capturas y bloc de notas para trabajar con IA en Linux con Hyprland.
+A prompt queue, capture inbox and scratchpad for AI-assisted work on Linux with Hyprland.
 
-Resaltás texto en cualquier app, tocás **Shift dos veces** y queda guardado. Escribís tus próximos prompts, los copiás cuando los necesitás y los tachás a medida que avanzás. Todo queda en tu máquina: no sincroniza nada, no recolecta nada y no usa cuentas.
+Highlight text in any app, tap **Shift twice**, and it's saved. Write your upcoming prompts, copy them when you need them, and check them off as you go. Everything stays on your machine: no sync, no telemetry, no account.
 
-Patina está inspirado en [Copper](https://shadcn.com/copper), la app para macOS de shadcn. Es un proyecto independiente, sin relación con Copper ni con su autor. Si usás Mac, comprá Copper.
+Patina is inspired by [Copper](https://shadcn.com/copper), shadcn's macOS app. It is an independent project with no affiliation with Copper or its author. If you're on a Mac, buy Copper.
 
-## Qué hace
+> The interface is currently in Spanish.
 
-- **Captura con doble Shift**: guarda el texto resaltado (la selección primaria de Wayland) junto con la app de origen y la hora. Solo toma selecciones nuevas: no repite lo que ya capturaste ni lo que resaltaste hace más de 10 segundos.
-- **Cola**: escribís prompts y los copiás con Enter. Los links se abren con un click y cada item tiene un botón "Copiar".
-- **Notas**: un bloc de texto libre que se guarda solo.
-- **Historial**: lo que limpiás o borrás de la cola queda guardado, con búsqueda, y se puede devolver a la cola.
-- **Con la extensión del navegador** (Brave, Chrome o Chromium):
-  - Cada captura guarda la página: favicon, dominio, título y link para volver a ella.
-  - Si no hay una selección nueva, se captura la URL de la pestaña. Así funciona también con la barra de direcciones.
-  - En WhatsApp Web guarda quién envió el mensaje, el grupo y la hora de envío.
-  - El texto se guarda como se ve en pantalla: Chromium corta la línea alrededor de elementos como las menciones de X, y Patina lo corrige.
+## Features
 
-## Requisitos
+- **Double Shift capture**: saves the highlighted text (the Wayland primary selection) along with the source app and time. Only fresh selections count: it won't re-capture what you already captured or what you highlighted more than 10 seconds ago.
+- **Queue**: type prompts and copy them with Enter. Links open with a click, and every item has a "Copy" button.
+- **Notes**: a free-form scratchpad that saves itself.
+- **History**: items you clear or delete from the queue are kept, searchable, and can be restored.
+- **With the browser extension** (Brave, Chrome or Chromium):
+  - Captures remember their page: favicon, domain, title, and a link back to it.
+  - With no fresh selection, the active tab's URL is captured, which also covers the address bar.
+  - On WhatsApp Web it saves the sender, the group and when the message was sent.
+  - Text is saved as it looks on screen. Chromium breaks lines around inline-flex elements such as X mentions; Patina fixes that.
 
-- Hyprland. Probado con 0.56 y configuración en Lua.
-- Python 3 con GTK 4 y libadwaita.
-- `wl-clipboard`, `libnotify` y `hyprctl`.
+## Compatibility
 
-En Fedora:
+| | Status |
+| --- | --- |
+| Hyprland 0.55+ with `hyprland.lua` | Tested on 0.56 |
+| Hyprland 0.53+ with `hyprland.conf` | Config verified with `Hyprland --verify-config` on 0.56 |
+| Hyprland 0.48–0.52 | Config written from the official docs for those versions, untested |
+| Hyprland 0.47 and older | Config written from the official docs (`windowrulev2`), untested |
+| Other Wayland compositors (Sway, niri, KDE, GNOME) | Not supported: Patina uses `hyprctl` to read the active window |
+| macOS | Not supported. Use [Copper](https://shadcn.com/copper) |
+
+## Requirements
+
+- Hyprland
+- Python 3 with GTK 4 and libadwaita
+- `wl-clipboard` and `libnotify`
+
+On Fedora:
 
 ```sh
 sudo dnf install python3-gobject gtk4 libadwaita wl-clipboard libnotify
 ```
 
-## Instalación
+On Arch:
+
+```sh
+sudo pacman -S python-gobject gtk4 libadwaita wl-clipboard libnotify
+```
+
+## Install
 
 ```sh
 git clone https://github.com/lautarosegura/patina
@@ -38,91 +57,88 @@ cd patina
 ./install.sh
 ```
 
-`install.sh` crea `~/.local/bin/patina` como enlace al archivo del repo y registra el host nativo en los navegadores Chromium que encuentre. La extensión y la configuración de Hyprland se usan directamente desde el clon, así que conservalo: si lo movés, volvé a correr `install.sh` y actualizá las rutas. No usa `sudo` ni modifica tu configuración.
+`install.sh` links `~/.local/bin/patina` to the file in your clone and registers the native messaging host for every Chromium-based browser it finds. The extension and the Hyprland config are used straight from the clone, so keep it around; if you move it, run `install.sh` again and update the paths. It doesn't use `sudo` and doesn't edit your config.
 
 ### Hyprland
 
-Agregá al final de tu configuración la ruta a tu clon (`install.sh` te la muestra) y recargá con `hyprctl reload`:
+`install.sh` detects your Hyprland version and config format and prints the exact line to add at the end of your config. Then reload with `hyprctl reload`.
 
-```lua
--- ~/.config/hypr/hyprland.lua
-dofile(os.getenv("HOME") .. "/code/patina/hypr/patina.lua")
-```
-
-```ini
-# ~/.config/hypr/hyprland.conf (sin probar)
-source = ~/code/patina/hypr/patina.conf
-```
-
-Si instalaste el comando en otra carpeta con `BIN_DIR=... ./install.sh`, definí `PATINA_BIN = "/ruta/patina"` antes del `dofile`.
-
-Eso agrega el doble Shift, **Super+C** para mostrar u ocultar Patina, la regla de ventana flotante y el arranque al iniciar sesión.
-
-### Extensión del navegador (opcional)
-
-1. Abrí `brave://extensions` o `chrome://extensions`.
-2. Activá el **modo de desarrollador**.
-3. Tocá **Cargar extensión sin empaquetar** y elegí la carpeta `extension/` de tu clon.
-4. Recargá las pestañas que ya tenías abiertas.
-
-La extensión pide estos permisos:
-
-- **Leer los sitios**: para saber de qué página es el texto que resaltás.
-- **Pestañas**: el navegador lo muestra como "leer tu historial de navegación". Sirve para conocer la URL y el título de la pestaña activa.
-- **Favicons**: para leer los íconos que el navegador ya tiene en caché, sin pedirlos a la red.
-- **Native messaging**: para pasarle los datos a Patina.
-
-## Uso
-
-| Acción | Atajo |
+| Your setup | Line to add |
 | --- | --- |
-| Capturar el texto seleccionado | Shift dos veces (menos de 350 ms) |
-| Mostrar u ocultar Patina | Super+C |
-| Agregar un prompt | Escribir en el campo y Enter |
-| Ir de la entrada a la lista | ↓ o Tab |
-| Copiar y volver a la app anterior | Enter, Ctrl+C o doble click sobre un item |
-| Solo copiar | Botón "Copiar" que aparece al pasar el mouse |
-| Tachar o destachar | Checkbox o Espacio |
-| Abrir un link o la página de origen | Click sobre el link o el dominio |
-| Borrar (pasa al historial) | Supr o Retroceso |
-| Reordenar | Ctrl+↑ / Ctrl+↓ |
-| Limpiar los completados (pasan al historial) | Ctrl+Shift+Retroceso |
-| Cola / Notas / Historial | Ctrl+1 / Ctrl+2 / Ctrl+3 |
-| Historial: devolver a la cola | Ctrl+Z o el botón ↶ |
-| Historial: borrar para siempre | Supr |
-| Ocultar | Esc |
+| 0.55+ with `hyprland.lua` | `dofile("/path/to/patina/hypr/patina.lua")` |
+| 0.53+ with `hyprland.conf` | `source = /path/to/patina/hypr/patina.conf` |
+| 0.48–0.52 | `source = /path/to/patina/hypr/patina-0.48.conf` |
+| 0.47 and older | `source = /path/to/patina/hypr/patina-0.47.conf` |
 
-Desde la terminal, `patina add "texto"` agrega un prompt y `patina capture` captura la selección actual.
+This adds double Shift capture, **Super+C** to show or hide Patina, a floating window rule, and autostart on login.
 
-## Datos
+If you installed the command somewhere else with `BIN_DIR=... ./install.sh`, set `PATINA_BIN = "/path/to/patina"` before the `dofile`. With a `.conf` file, edit the `~/.local/bin/patina` paths in it instead.
 
-- `~/.local/share/patina/`: `items.json` (la cola), `historial.json`, `notas.md` y `favicons/`.
-- `$XDG_RUNTIME_DIR/patina-*.json`: la última selección y la pestaña activa que mandó la extensión. Son archivos en memoria, con permisos `0600`, que se borran al cerrar la sesión.
+### Browser extension (optional)
 
-## Desarrollo
+1. Open `brave://extensions` or `chrome://extensions`.
+2. Turn on **Developer mode**.
+3. Click **Load unpacked** and pick the `extension/` folder of your clone.
+4. Reload the tabs you already had open.
 
-Como el comando, la extensión y la configuración apuntan al clon, los cambios se usan directamente:
+The extension asks for:
 
-- **`patina`:** reiniciá el servicio con `pkill -f "patina --service"; patina --service &`.
-- **`extension/`:** recargala en `brave://extensions`.
-- **`hypr/`:** corré `hyprctl reload`.
+- **Read site data**: to know which page the highlighted text comes from.
+- **Tabs**: shown by the browser as "read your browsing history". It's used to get the active tab's URL and title.
+- **Favicons**: to read the icons the browser already has cached, without fetching them.
+- **Native messaging**: to hand the data to Patina.
 
-## Cómo funciona
+## Usage
 
-- **Un solo programa:** `patina` es un único archivo Python con GTK 4 y libadwaita. Queda corriendo oculto (`patina --service`), y los demás comandos le llegan por D-Bus.
-- **Doble Shift:** Hyprland ejecuta `patina tap` al soltar Shift, sin consumir la tecla. `tap` no carga GTK. Si dos taps llegan con menos de 350 ms de diferencia, se ejecuta `patina capture`.
-- **Selecciones viejas:** en Wayland la selección primaria sigue disponible aunque en pantalla ya no haya nada seleccionado. Patina vigila sus cambios con `wl-paste --primary --watch` para descartar las selecciones viejas.
-- **Extensión:** `content.js` manda el texto resaltado y, en WhatsApp Web, el remitente, que WhatsApp marca con `data-pre-plain-text`. `background.js` agrega el favicon y la pestaña activa, y lo reenvía por native messaging al host `io.github.lautarosegura.patina`.
-- **Host nativo:** es el mismo `patina`, que el navegador ejecuta con `chrome-extension://…`. Guarda los datos en `$XDG_RUNTIME_DIR`, y al capturar Patina los usa solo si coinciden con el texto capturado.
-- **ID de la extensión:** el `manifest.json` incluye una clave pública. Así el ID de la extensión (`fedemognlmdojgmeinfhhjliccpfncdo`) es fijo y coincide con el que autoriza el host nativo.
+| Action | Shortcut |
+| --- | --- |
+| Capture the highlighted text | Shift twice (within 350 ms) |
+| Show or hide Patina | Super+C |
+| Add a prompt | Type in the field and press Enter |
+| Move from the field to the list | ↓ or Tab |
+| Copy and go back to the previous app | Enter, Ctrl+C or double-click on an item |
+| Copy only | "Copy" button shown on hover |
+| Check or uncheck | Checkbox or Space |
+| Open a link or the source page | Click the link or the domain |
+| Delete (moves to history) | Delete or Backspace |
+| Reorder | Ctrl+↑ / Ctrl+↓ |
+| Clear checked items (moves them to history) | Ctrl+Shift+Backspace |
+| Queue / Notes / History | Ctrl+1 / Ctrl+2 / Ctrl+3 |
+| History: restore to the queue | Ctrl+Z or the ↶ button |
+| History: delete forever | Delete |
+| Hide | Esc |
 
-## Desinstalar
+From a terminal, `patina add "text"` adds a prompt and `patina capture` captures the current selection.
+
+## Data
+
+- `~/.local/share/patina/`: `items.json` (the queue), `historial.json` (history), `notas.md` (notes) and `favicons/`.
+- `$XDG_RUNTIME_DIR/patina-*.json`: the latest selection and active tab sent by the extension. These live in memory, are `0600`, and are gone when you log out.
+
+## How it works
+
+- **One program:** `patina` is a single Python file using GTK 4 and libadwaita. It stays running hidden (`patina --service`), and other commands reach it over D-Bus.
+- **Double Shift:** Hyprland runs `patina tap` when Shift is released, without consuming the key. `tap` doesn't load GTK; two taps within 350 ms run `patina capture`.
+- **Stale selections:** on Wayland the primary selection stays available even after nothing looks selected. Patina watches it with `wl-paste --primary --watch` to ignore stale selections.
+- **Extension:** `content.js` sends the highlighted text and, on WhatsApp Web, the sender (WhatsApp tags messages with `data-pre-plain-text`). `background.js` adds the favicon and the active tab and forwards everything over native messaging to the `io.github.lautarosegura.patina` host.
+- **Native host:** the same `patina` file, launched by the browser with a `chrome-extension://…` argument. It writes to `$XDG_RUNTIME_DIR`, and a capture only uses that data when it matches the captured text.
+- **Extension ID:** `manifest.json` includes a public key, so the extension ID (`fedemognlmdojgmeinfhhjliccpfncdo`) is fixed and matches the one the native host allows.
+
+## Development
+
+The command, the extension and the Hyprland config all point at the clone, so your changes are live:
+
+- **`patina`:** restart the service with `pkill -f "patina --service"; patina --service &`.
+- **`extension/`:** reload it in `brave://extensions`.
+- **`hypr/`:** run `hyprctl reload`.
+
+## Uninstall
 
 ```sh
-./uninstall.sh          # quita el comando y el host nativo; conserva tus datos
-./uninstall.sh --purge  # borra también ~/.local/share/patina
+./uninstall.sh          # removes the command and the native host, keeps your data
+./uninstall.sh --purge  # also deletes ~/.local/share/patina
 ```
 
-## Licencia
+## License
 
-[MIT](LICENSE). El logo de WhatsApp es de [Simple Icons](https://simpleicons.org) (CC0).
+[MIT](LICENSE). The WhatsApp logo comes from [Simple Icons](https://simpleicons.org) (CC0).

@@ -1,21 +1,21 @@
--- Patina en Hyprland (configuración en Lua). Incluilo al final de ~/.config/hypr/hyprland.lua
--- con la ruta a tu clon del repo, por ejemplo:
+-- Patina for Hyprland 0.55+ (hyprland.lua). Include it at the end of ~/.config/hypr/hyprland.lua
+-- with the path to your clone, for example:
 --   dofile(os.getenv("HOME") .. "/code/patina/hypr/patina.lua")
--- Si instalaste el comando en otro lugar que ~/.local/bin, definí antes PATINA_BIN = "/ruta/patina".
+-- If the command isn't in ~/.local/bin, set PATINA_BIN = "/path/to/patina" before the dofile.
 
 local patina = PATINA_BIN or (os.getenv("HOME") .. "/.local/bin/patina")
 
--- Doble Shift captura la selección. La liberación de Shift no se consume:
--- Shift sigue funcionando normal en las apps.
+-- Double Shift captures the selection. The Shift release isn't consumed, so Shift keeps
+-- working normally in apps.
 for _, key in ipairs({ "Shift_L", "Shift_R" }) do
     hl.bind("SHIFT + " .. key, hl.dsp.exec_cmd(patina .. " tap"), {
         release = true,
         non_consuming = true,
-        description = "Patina: doble Shift captura la selección",
+        description = "Patina: double Shift captures the selection",
     })
 end
 
-hl.bind("SUPER + C", hl.dsp.exec_cmd(patina), { description = "Patina: mostrar u ocultar" })
+hl.bind("SUPER + C", hl.dsp.exec_cmd(patina), { description = "Patina: show or hide" })
 
 hl.window_rule({
     name   = "patina-float",
@@ -25,7 +25,7 @@ hl.window_rule({
     center = true,
 })
 
--- Queda corriendo oculto para responder rápido al atajo.
+-- Keeps running hidden so the shortcut responds instantly.
 hl.on("hyprland.start", function ()
     hl.exec_cmd(patina .. " --service")
 end)

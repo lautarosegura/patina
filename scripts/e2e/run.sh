@@ -1,5 +1,6 @@
 #!/bin/sh
 # Uso (desde el repo): scripts/in-container.sh scripts/e2e/run.sh
+# Las capturas del README: scripts/in-container.sh env SCRIPT=readme_shots.py scripts/e2e/run.sh (quedan en docs/).
 set -eu
 cd "$(dirname "$0")"
 export XDG_RUNTIME_DIR=/tmp/e2e-runtime XDG_DATA_HOME=/tmp/e2e-data
@@ -10,5 +11,5 @@ exec dbus-run-session -- sh -c '
     WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 /tmp/sway -c sway.conf >out/sway.log 2>&1 &
     for _ in $(seq 50); do [ -S "$XDG_RUNTIME_DIR/wayland-1" ] && break; sleep 0.1; done
     export WAYLAND_DISPLAY=wayland-1 SWAYSOCK="$(ls "$XDG_RUNTIME_DIR"/sway-ipc.*)" GDK_BACKEND=wayland
-    python3 -I ui_test.py ../../src-tauri/target/release/patina
+    python3 -I "${SCRIPT:-ui_test.py}" ../../src-tauri/target/release/patina
 '

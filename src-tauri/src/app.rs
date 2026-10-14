@@ -70,6 +70,8 @@ pub fn show(app: &AppHandle) {
     let _ = window.show();
     let _ = window.unminimize();
     let _ = window.set_focus();
+    // The webview inside needs the keyboard too, so the prompt entry takes typing right away.
+    let _ = AsRef::<tauri::Webview>::as_ref(&window).set_focus();
     let _ = app.emit("window-shown", ());
 }
 
@@ -207,6 +209,12 @@ fn favicon_url(state: Ui, name: String) -> Option<String> {
 }
 
 pub fn run(paths: Paths, command: Command) {
+    // WebKitGTK's DMA-BUF renderer kills the app with "Error 71 (Protocol error)" on Wayland with
+    // NVIDIA drivers (reproduced on Hyprland + RTX 3090). The fallback renderer is plenty here.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
     let store = Store::open(paths.data.clone());
     let state = AppState { paths, store: Mutex::new(store), clock: Arc::new(Mutex::new(SelectionClock::default())) };
     let builder = tauri::Builder::default()

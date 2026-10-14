@@ -15,18 +15,39 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm", "appimage", "nsis"],
+    "targets": "all",
     "category": "Productivity",
     "shortDescription": "Prompt queue and capture inbox",
     "longDescription": "Patina keeps a queue of prompts, captures highlighted text with its source page or WhatsApp sender, and a scratchpad. Everything stays on your machine.",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png", "icons/icon.ico"],
-    "resources": { "../extension/": "extension/" },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../extension/": "extension/",
+      "../hypr/": "hypr/"
+    },
     "linux": {
-      "deb": { "depends": ["wl-clipboard", "libnotify-bin"] },
-      "rpm": { "depends": ["wl-clipboard", "libnotify"] }
+      "deb": {
+        "depends": [
+          "wl-clipboard",
+          "libnotify-bin"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "wl-clipboard",
+          "libnotify"
+        ]
+      }
     },
     "windows": {
-      "nsis": { "installMode": "currentUser" }
+      "nsis": {
+        "installMode": "currentUser"
+      }
     }
   }
 }

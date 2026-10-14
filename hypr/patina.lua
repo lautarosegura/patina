@@ -1,9 +1,10 @@
--- Patina for Hyprland 0.55+ (hyprland.lua). Include it at the end of ~/.config/hypr/hyprland.lua
--- with the path to your clone, for example:
---   dofile(os.getenv("HOME") .. "/code/patina/hypr/patina.lua")
--- If the command isn't in ~/.local/bin, set PATINA_BIN = "/path/to/patina" before the dofile.
+-- Patina for Hyprland 0.55+ (hyprland.lua). Include it at the end of ~/.config/hypr/hyprland.lua,
+-- for example with the copy the .deb and .rpm packages install:
+--   dofile("/usr/lib/Patina/hypr/patina.lua")
+-- If `patina` isn't in your PATH (an AppImage, for example), set PATINA_BIN = "/path/to/patina"
+-- before the dofile.
 
-local patina = PATINA_BIN or (os.getenv("HOME") .. "/.local/bin/patina")
+local patina = PATINA_BIN or "patina"
 
 -- Double Shift captures the selection. The Shift release isn't consumed, so Shift keeps
 -- working normally in apps.
@@ -19,7 +20,7 @@ hl.bind("SUPER + C", hl.dsp.exec_cmd(patina), { description = "Patina: show or h
 
 hl.window_rule({
     name   = "patina-float",
-    match  = { class = "^io\\.github\\.lautarosegura\\.Patina$" },
+    match  = { class = "^patina$" },
     float  = true,
     size   = "560 680",
     center = true,

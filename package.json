@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test:ui": "node --test ui/test/"
+    "test:ui": "node --test \"tests/ui/*.test.mjs\""
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

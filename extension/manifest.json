@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Patina",
+  "version": "0.1.0",
+  "description": "Le pasa a Patina la página (y en WhatsApp, quién envió el mensaje) del texto que resaltás.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz/UmO86GBKezHYZMRhKZYeG2rBggMBxhby5mkFi1qka6nGCS0DPXXn9Xn3HFuVWdvkCodzC4Q4RQZRIB7+Uljl9prW1KNe89yLJyY9gYzIxty5HYkAaw227wm8N73R9axz6eYupSzuieIUR9zUwXYwdIr68MzyAwLJvf2yFVvbW1ef5+Gt9cRvD8sfK2BorHdGwhD94ffK4MXSmzhDCnlXANiKIQSekq9R75yL5/rJs79le7LCNyRwtnFda5kHMMTWq/pL18oicKWsPR3d+y4Wht+jxLLbPWNlAQ0p1fEJDD9+IW7ZxY7W6w5kXlMDY69pKXv5Rs26M5ufy6+7HPrQIDAQAB",
+  "permissions": [
+    "nativeMessaging",
+    "favicon",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

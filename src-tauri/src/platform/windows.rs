@@ -239,11 +239,22 @@ fn copy_selection() -> Option<String> {
     copied
 }
 
-pub fn selection(_clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
-    match copy_selection() {
-        Some(text) if !text.trim().is_empty() => (text, SelectionClock { changed_at: Some(epoch_seconds()), captured_at: None }),
-        _ => (String::new(), SelectionClock::default()),
-    }
+static FIRST_COPIED_AT: Mutex<Option<(String, f64)>> = Mutex::new(None);
+
+pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
+    let Some(text) = copy_selection().filter(|text| !text.trim().is_empty()) else {
+        return (String::new(), SelectionClock::default());
+    };
+    let mut first_copied = FIRST_COPIED_AT.lock().unwrap();
+    let changed_at = match &*first_copied {
+        Some((seen, at)) if *seen == text => *at,
+        _ => {
+            let now = epoch_seconds();
+            *first_copied = Some((text.clone(), now));
+            now
+        }
+    };
+    (text, SelectionClock { changed_at: Some(changed_at), captured_at: clock.lock().unwrap().captured_at })
 }
 
 pub fn copy(_app: &AppHandle, text: &str) {

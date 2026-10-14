@@ -346,7 +346,7 @@ notes.addEventListener('input', () => {
     void run(async () => {
       await invoke('save_notes', { text });
       savedNotesRevision = revision;
-      await reload();
+      state.notes = text;
     });
   }, 400);
 });

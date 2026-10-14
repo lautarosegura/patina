@@ -39,9 +39,8 @@ mod tests {
 
     #[test]
     fn extension_id_matches_manifest_key() {
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../extension/manifest.json");
         let manifest: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(path).expect("extension manifest")).expect("valid manifest JSON");
+            serde_json::from_str(include_str!("../../../extension/manifest.json")).expect("valid manifest JSON");
         let key = base64::engine::general_purpose::STANDARD
             .decode(manifest["key"].as_str().expect("extension public key"))
             .expect("base64 DER public key");

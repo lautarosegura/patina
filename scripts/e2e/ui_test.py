@@ -31,7 +31,8 @@ def sh(*cmd, input=None):
 
 def copy(text, primary=False):
     # wl-copy stays in the background serving the clipboard: no pipes to wait on.
-    subprocess.run(["wl-copy", *(["--primary"] if primary else []), text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["wl-copy", *(["--primary"] if primary else [])], input=text, text=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def check(name, ok, detail=""):
@@ -124,10 +125,18 @@ open(os.path.join(DATA, "notas.md"), "w").write("## Ideas\n")
 os.makedirs(os.path.join(DATA, "favicons"), exist_ok=True)
 open(os.path.join(DATA, "favicons", "3aeb002460381c6f258e.png"), "wb").write(red_png(16))
 
-service = subprocess.Popen([BIN, "--service"], stdout=open(f"{OUT}/patina.log", "w"), stderr=subprocess.STDOUT)
+# The app opens links through xdg-open; a fake one records the URL instead of starting a browser.
+FAKE_BIN = os.path.abspath(f"{OUT}/fakebin")
+os.makedirs(FAKE_BIN, exist_ok=True)
+OPENED = os.path.abspath(f"{OUT}/opened.txt")
+with open(f"{FAKE_BIN}/xdg-open", "w") as f:
+    f.write(f'#!/bin/sh\nprintf "%s\\n" "$1" >> {OPENED}\n')
+os.chmod(f"{FAKE_BIN}/xdg-open", 0o755)
+service_env = {**os.environ, "PATH": f"{FAKE_BIN}:{os.environ['PATH']}"}
+service = subprocess.Popen([BIN, "--service"], stdout=open(f"{OUT}/patina.log", "w"), stderr=subprocess.STDOUT, env=service_env)
 time.sleep(2)
 subprocess.run([BIN])
-check("Super+C (patina) muestra la ventana flotante 560x680", wait_for(lambda: patina_window() is not None)
+check("patina (lo que ejecuta Super+C) muestra la ventana flotante 560x680", wait_for(lambda: patina_window() is not None)
       and patina_window()["rect"]["width"] == 560 and patina_window()["rect"]["height"] == 680, str(patina_window() and patina_window()["rect"]))
 time.sleep(1.5)
 shot("01-cola")
@@ -150,6 +159,11 @@ check("botón Copiar copia sin tachar ni cerrar", clipboard() == ITEMS[1]["text"
       and patina_window() is not None, repr(clipboard()))
 
 copy("marcador")
+click(233, 251)
+check("click en un link lo abre sin seleccionar ni copiar",
+      wait_for(lambda: os.path.exists(OPENED) and open(OPENED).read().strip() == "https://example.com/docs")
+      and clipboard() == "marcador" and patina_window() is not None, repr(open(OPENED).read() if os.path.exists(OPENED) else ""))
+
 click(100, 290)
 check("un click en el texto solo selecciona", clipboard() == "marcador" and patina_window() is not None, repr(clipboard()))
 
@@ -184,6 +198,13 @@ copy("texto capturado desde afuera", primary=True)
 time.sleep(0.6)
 subprocess.run([BIN, "capture"])
 check("una captura externa aparece en la cola", wait_for(lambda: items()[-1]["text"] == "texto capturado desde afuera"))
+big = "selección grande " * 12000
+copy(big, primary=True)
+time.sleep(0.6)
+subprocess.run([BIN, "capture"])
+check("una selección de ~200 KB se captura entera", wait_for(lambda: len(items()[-1]["text"]) == len(big.strip("\n")), timeout=6),
+      str(len(items()[-1]["text"])))
+time.sleep(0.8)
 time.sleep(0.8)
 shot("06-captura-externa")
 

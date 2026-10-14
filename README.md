@@ -10,7 +10,7 @@ Patina is inspired by [Copper](https://shadcn.com/copper), shadcn's macOS app. I
 
 ## Features
 
-- **Double Shift capture.** Saves the highlighted text with the app it came from and the time. Only fresh selections count: Patina won't re-capture what you already captured or what you highlighted more than 10 seconds ago.
+- **Double Shift capture.** Saves the highlighted text with the app it came from and the time. Patina won't capture the same selection twice. On Linux, a selection made more than 10 seconds ago doesn't count either, because Wayland keeps it available after nothing looks selected on screen.
 - **Queue.** Type prompts and copy them with Enter. Links open with a click, and every item has a **Copiar** button.
 - **Notes.** A scratchpad that saves itself.
 - **History.** Items you clear or delete from the queue are kept, searchable, and can be restored.
@@ -71,7 +71,7 @@ With a `.conf` file, copy it and replace `patina` with the full path.
 
 On Windows:
 
-- **Double Shift** captures the highlighted text. Windows has no "primary selection" like Linux, so Patina sends Ctrl+C to the focused app and then puts your clipboard back. Text and images are restored; other clipboard content, such as copied files, is cleared. Some apps copy the whole line on Ctrl+C when nothing is selected (VS Code does), so a capture with nothing selected can save that line.
+- **Double Shift** captures the highlighted text. Windows has no "primary selection" like Linux, so Patina sends Ctrl+C to the focused app and then puts your clipboard back. Plain text and images come back; formatting such as HTML or RTF and copied files are lost. Some apps copy the whole line on Ctrl+C when nothing is selected (VS Code does), so a capture with nothing selected can save that line. Capturing the same text twice in a row does nothing, as on Linux.
 - **Win+C** shows or hides Patina. If Windows reserves Win+C (some versions open Copilot with it), Patina uses **Ctrl+Alt+C** instead.
 - **The tray icon** shows or hides Patina on click and has a menu to quit.
 - You can turn off starting with Windows in **Settings → Apps → Startup**. Patina won't turn it back on.

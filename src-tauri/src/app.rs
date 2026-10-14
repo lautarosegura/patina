@@ -28,11 +28,11 @@ pub enum Command {
 
 impl Command {
     pub fn parse(args: &[String]) -> Option<Command> {
-        match args {
-            [] => Some(Command::Toggle),
-            [flag] if flag == "--service" => Some(Command::Service),
-            [cmd] if cmd == "capture" => Some(Command::Capture),
-            [cmd, rest @ ..] if cmd == "add" && !rest.is_empty() => Some(Command::Add(rest.join(" "))),
+        match args.first().map(String::as_str) {
+            None | Some("toggle") => Some(Command::Toggle),
+            Some("--service") => Some(Command::Service),
+            Some("capture") => Some(Command::Capture),
+            Some("add") if args.len() > 1 => Some(Command::Add(args[1..].join(" "))),
             _ => None,
         }
     }
@@ -259,4 +259,25 @@ pub fn run(paths: Paths, command: Command) {
             api.prevent_exit();
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Command;
+
+    fn parse(args: &[&str]) -> Option<Command> {
+        Command::parse(&args.iter().map(|a| a.to_string()).collect::<Vec<_>>())
+    }
+
+    #[test]
+    fn commands_match_the_python_cli() {
+        assert_eq!(parse(&[]), Some(Command::Toggle));
+        assert_eq!(parse(&["toggle"]), Some(Command::Toggle));
+        assert_eq!(parse(&["--service"]), Some(Command::Service));
+        assert_eq!(parse(&["capture"]), Some(Command::Capture));
+        assert_eq!(parse(&["capture", "extra"]), Some(Command::Capture));
+        assert_eq!(parse(&["add", "hola", "mundo"]), Some(Command::Add("hola mundo".into())));
+        assert_eq!(parse(&["add"]), None);
+        assert_eq!(parse(&["foo"]), None);
+    }
 }

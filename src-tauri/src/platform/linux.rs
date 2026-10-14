@@ -30,10 +30,17 @@ fn stdout_or_empty(program: &str, args: &[&str], timeout: Duration) -> String {
     let Ok(mut child) = Command::new(program).args(args).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() else {
         return String::new();
     };
+    // Drain stdout while waiting: a selection larger than the pipe buffer would block the child.
+    let mut stdout = child.stdout.take().unwrap();
+    let reader = std::thread::spawn(move || {
+        let mut out = String::new();
+        let _ = std::io::Read::read_to_string(&mut stdout, &mut out);
+        out
+    });
     let deadline = Instant::now() + timeout;
     loop {
         match child.try_wait() {
-            Ok(Some(_)) => break,
+            Ok(Some(_)) => return reader.join().unwrap_or_default(),
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(5)),
             _ => {
                 let _ = child.kill();
@@ -42,9 +49,6 @@ fn stdout_or_empty(program: &str, args: &[&str], timeout: Duration) -> String {
             }
         }
     }
-    let mut out = String::new();
-    let _ = std::io::Read::read_to_string(&mut child.stdout.take().unwrap(), &mut out);
-    out
 }
 
 pub fn active_window() -> Window {

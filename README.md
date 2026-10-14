@@ -1,6 +1,6 @@
 # Patina
 
-A prompt queue, capture inbox and scratchpad for AI-assisted work on Linux with Hyprland.
+A prompt queue, capture inbox and scratchpad for AI-assisted work, for Linux with Hyprland and for Windows.
 
 Highlight text in any app, tap **Shift twice**, and it's saved. Write your upcoming prompts, copy them when you need them, and check them off as you go. Everything stays on your machine: no sync, no telemetry, no account.
 
@@ -10,94 +10,101 @@ Patina is inspired by [Copper](https://shadcn.com/copper), shadcn's macOS app. I
 
 ## Features
 
-- **Double Shift capture**: saves the highlighted text (the Wayland primary selection) along with the source app and time. Only fresh selections count: it won't re-capture what you already captured or what you highlighted more than 10 seconds ago.
-- **Queue**: type prompts and copy them with Enter. Links open with a click, and every item has a "Copy" button.
-- **Notes**: a free-form scratchpad that saves itself.
-- **History**: items you clear or delete from the queue are kept, searchable, and can be restored.
-- **With the browser extension** (Brave, Chrome or Chromium):
-  - Captures remember their page: favicon, domain, title, and a link back to it.
-  - With no fresh selection, the active tab's URL is captured, which also covers the address bar.
-  - On WhatsApp Web it saves the sender, the group and when the message was sent.
-  - Text is saved as it looks on screen. Chromium breaks lines around inline-flex elements such as X mentions; Patina fixes that.
+- **Double Shift capture.** Saves the highlighted text with the app it came from and the time. Only fresh selections count: Patina won't re-capture what you already captured or what you highlighted more than 10 seconds ago.
+- **Queue.** Type prompts and copy them with Enter. Links open with a click, and every item has a **Copiar** button.
+- **Notes.** A scratchpad that saves itself.
+- **History.** Items you clear or delete from the queue are kept, searchable, and can be restored.
+- **Browser extension** (Brave, Chrome, Chromium or Edge):
+  - A capture remembers its page: favicon, domain, title, and a link back to it.
+  - With no fresh selection in the browser, Patina captures the active tab's URL. This also covers the address bar.
+  - On WhatsApp Web, a capture keeps the sender, the group and when the message was sent.
+  - Text is saved as it looks on screen. Chromium breaks lines around inline elements such as X mentions, and Patina undoes that.
 
-## Compatibility
+## Platforms
 
-| | Status |
+| Platform | Status |
 | --- | --- |
-| Hyprland 0.55+ with `hyprland.lua` | Tested on 0.56 |
-| Hyprland 0.53+ with `hyprland.conf` | Config verified with `Hyprland --verify-config` on 0.56 |
-| Hyprland 0.48–0.52 | Config written from the official docs for those versions, untested |
-| Hyprland 0.47 and older | Config written from the official docs (`windowrulev2`), untested |
-| Other Wayland compositors (Sway, niri, KDE, GNOME) | Not supported: Patina uses `hyprctl` to read the active window |
+| Linux, Hyprland 0.55+ with `hyprland.lua` | Tested on 0.56 |
+| Linux, Hyprland 0.53+ with `hyprland.conf` | Config checked with `Hyprland --verify-config` on 0.56 |
+| Linux, Hyprland 0.48–0.52 | Config written from the official docs for those versions, untested |
+| Linux, Hyprland 0.47 and older | Config written from the official docs (`windowrulev2`), untested |
+| Linux, other compositors | Not supported. Patina uses `hyprctl` to read the active window and Hyprland binds for the shortcuts |
+| Windows 10 and 11 | Builds and passes the logic tests; not yet tested on a real Windows machine |
 | macOS | Not supported. Use [Copper](https://shadcn.com/copper) |
 
-## Requirements
+## Install on Linux
 
-- Hyprland
-- Python 3 with GTK 4 and libadwaita
-- `wl-clipboard` and `libnotify`
+Download the package for your distribution from the [releases page](https://github.com/lautarosegura/patina/releases):
 
-On Fedora:
+- **Fedora:** `sudo dnf install ./Patina-*.x86_64.rpm`
+- **Debian, Ubuntu:** `sudo apt install ./Patina_*_amd64.deb`
+- **Other distributions:** the `.AppImage`. Make it executable and keep it somewhere stable, because Hyprland and the browser launch it by path.
 
-```sh
-sudo dnf install python3-gobject gtk4 libadwaita wl-clipboard libnotify
-```
-
-On Arch:
-
-```sh
-sudo pacman -S python-gobject gtk4 libadwaita wl-clipboard libnotify
-```
-
-## Install
-
-```sh
-git clone https://github.com/lautarosegura/patina
-cd patina
-./install.sh
-```
-
-`install.sh` links `~/.local/bin/patina` to the file in your clone and registers the native messaging host for every Chromium-based browser it finds. The extension and the Hyprland config are used straight from the clone, so keep it around; if you move it, run `install.sh` again and update the paths. It doesn't use `sudo` and doesn't edit your config.
+The packages pull in `wl-clipboard` and `libnotify`. The AppImage needs both installed.
 
 ### Hyprland
 
-`install.sh` detects your Hyprland version and config format and prints the exact line to add at the end of your config. Then reload with `hyprctl reload`.
+Add the file that matches your Hyprland version at the end of your config, then run `hyprctl reload`. The `.deb` and `.rpm` packages install these files in `/usr/lib/Patina/hypr/`; they are also in [`hypr/`](hypr/) in this repo.
 
 | Your setup | Line to add |
 | --- | --- |
-| 0.55+ with `hyprland.lua` | `dofile("/path/to/patina/hypr/patina.lua")` |
-| 0.53+ with `hyprland.conf` | `source = /path/to/patina/hypr/patina.conf` |
-| 0.48–0.52 | `source = /path/to/patina/hypr/patina-0.48.conf` |
-| 0.47 and older | `source = /path/to/patina/hypr/patina-0.47.conf` |
+| 0.55+ with `hyprland.lua` | `dofile("/usr/lib/Patina/hypr/patina.lua")` |
+| 0.53+ with `hyprland.conf` | `source = /usr/lib/Patina/hypr/patina.conf` |
+| 0.48–0.52 | `source = /usr/lib/Patina/hypr/patina-0.48.conf` |
+| 0.47 and older | `source = /usr/lib/Patina/hypr/patina-0.47.conf` |
 
 This adds double Shift capture, **Super+C** to show or hide Patina, a floating window rule, and autostart on login.
 
-If you installed the command somewhere else with `BIN_DIR=... ./install.sh`, set `PATINA_BIN = "/path/to/patina"` before the `dofile`. With a `.conf` file, edit the `~/.local/bin/patina` paths in it instead.
+The files run `patina` from Hyprland's `PATH`. That works with the packages, which install to `/usr/bin`. With the AppImage, or a binary in a folder outside Hyprland's `PATH` (often `~/.local/bin`), set the path first:
 
-### Browser extension (optional)
+```lua
+PATINA_BIN = "/home/you/Applications/Patina.AppImage"
+dofile("/path/to/patina.lua")
+```
 
-1. Open `brave://extensions` or `chrome://extensions`.
+With a `.conf` file, copy it and replace `patina` with the full path.
+
+## Install on Windows
+
+1. Download `Patina_*_x64-setup.exe` from the [releases page](https://github.com/lautarosegura/patina/releases) and run it. It installs for your user only and doesn't need admin rights.
+2. Open Patina from the Start menu once. From then on it starts with Windows and stays in the tray.
+
+On Windows:
+
+- **Double Shift** captures the highlighted text. Windows has no "primary selection" like Linux, so Patina sends Ctrl+C to the focused app and then puts your clipboard back. Text and images are restored; other clipboard content, such as copied files, is cleared. Some apps copy the whole line on Ctrl+C when nothing is selected (VS Code does), so a capture with nothing selected can save that line.
+- **Win+C** shows or hides Patina. If Windows reserves Win+C (some versions open Copilot with it), Patina uses **Ctrl+Alt+C** instead.
+- **The tray icon** shows or hides Patina on click and has a menu to quit.
+- You can turn off starting with Windows in **Settings → Apps → Startup**. Patina won't turn it back on.
+
+## Install the browser extension (optional)
+
+The extension tells Patina which page a capture came from and, on WhatsApp Web, who sent the message. Patina registers its side of the connection with Brave, Chrome, Chromium and Edge every time it starts.
+
+1. Open `brave://extensions`, `chrome://extensions` or `edge://extensions`.
 2. Turn on **Developer mode**.
-3. Click **Load unpacked** and pick the `extension/` folder of your clone.
+3. Click **Load unpacked** and pick the extension folder:
+   - `.deb` or `.rpm`: `/usr/lib/Patina/extension`
+   - Windows: `%LOCALAPPDATA%\Patina\extension`
+   - AppImage or source: the [`extension/`](extension/) folder of this repo
 4. Reload the tabs you already had open.
 
 The extension asks for:
 
-- **Read site data**: to know which page the highlighted text comes from.
-- **Tabs**: shown by the browser as "read your browsing history". It's used to get the active tab's URL and title.
-- **Favicons**: to read the icons the browser already has cached, without fetching them.
-- **Native messaging**: to hand the data to Patina.
+- **Read site data**, to know which page the highlighted text comes from.
+- **Tabs**, shown by the browser as "read your browsing history", to get the active tab's URL and title.
+- **Favicons**, to read the icons the browser already has cached, without fetching them.
+- **Native messaging**, to hand the data to Patina.
 
-## Usage
+## Shortcuts
 
 | Action | Shortcut |
 | --- | --- |
 | Capture the highlighted text | Shift twice (within 350 ms) |
-| Show or hide Patina | Super+C |
+| Show or hide Patina | Super+C on Linux, Win+C or Ctrl+Alt+C on Windows |
 | Add a prompt | Type in the field and press Enter |
 | Move from the field to the list | ↓ or Tab |
 | Copy and go back to the previous app | Enter, Ctrl+C or double-click on an item |
-| Copy only | "Copy" button shown on hover |
+| Copy only | **Copiar** button shown on hover |
 | Check or uncheck | Checkbox or Space |
 | Open a link or the source page | Click the link or the domain |
 | Delete (moves to history) | Delete or Backspace |
@@ -110,34 +117,58 @@ The extension asks for:
 
 From a terminal, `patina add "text"` adds a prompt and `patina capture` captures the current selection.
 
-## Data
+## Where your data lives
 
-- `~/.local/share/patina/`: `items.json` (the queue), `historial.json` (history), `notas.md` (notes) and `favicons/`.
-- `$XDG_RUNTIME_DIR/patina-*.json`: the latest selection and active tab sent by the extension. These live in memory, are `0600`, and are gone when you log out.
+| | Linux | Windows |
+| --- | --- | --- |
+| Queue, history, notes, favicons | `~/.local/share/patina/` | `%APPDATA%\patina\` |
+| Latest selection and active tab from the extension | `$XDG_RUNTIME_DIR/patina-*.json` (in memory, `0600`) | `%TEMP%\patina\` |
+
+The files are `items.json` (the queue), `historial.json` (history), `notas.md` (notes) and `favicons/`. Patina 0.1, the Python version, used the same files, so updating keeps your data.
 
 ## How it works
 
-- **One program:** `patina` is a single Python file using GTK 4 and libadwaita. It stays running hidden (`patina --service`), and other commands reach it over D-Bus.
-- **Double Shift:** Hyprland runs `patina tap` when Shift is released, without consuming the key. `tap` doesn't load GTK; two taps within 350 ms run `patina capture`.
-- **Stale selections:** on Wayland the primary selection stays available even after nothing looks selected. Patina watches it with `wl-paste --primary --watch` to ignore stale selections.
-- **Extension:** `content.js` sends the highlighted text and, on WhatsApp Web, the sender (WhatsApp tags messages with `data-pre-plain-text`). `background.js` adds the favicon and the active tab and forwards everything over native messaging to the `io.github.lautarosegura.patina` host.
-- **Native host:** the same `patina` file, launched by the browser with a `chrome-extension://…` argument. It writes to `$XDG_RUNTIME_DIR`, and a capture only uses that data when it matches the captured text.
-- **Extension ID:** `manifest.json` includes a public key, so the extension ID (`fedemognlmdojgmeinfhhjliccpfncdo`) is fixed and matches the one the native host allows.
+Patina is a [Tauri](https://tauri.app) app: a Rust backend in [`src-tauri/`](src-tauri/) and a plain HTML, CSS and JavaScript interface in [`ui/`](ui/). One instance keeps running with its window hidden. Running `patina` again, with or without a command, hands the command to that instance.
 
-## Development
+The executable has three modes, picked from its arguments before Tauri starts:
 
-The command, the extension and the Hyprland config all point at the clone, so your changes are live:
+- **`patina tap`** (Linux). Hyprland runs it on every Shift release without consuming the key. It doesn't start Tauri, so it stays cheap. Two taps within 350 ms run `patina capture`.
+- **`patina chrome-extension://…`**. The browser starts this as the extension's native messaging host. It writes the latest selection and active tab to the runtime folder.
+- **Anything else** starts the app or forwards to the running one.
 
-- **`patina`:** restart the service with `pkill -f "patina --service"; patina --service &`.
-- **`extension/`:** reload it in `brave://extensions`.
-- **`hypr/`:** run `hyprctl reload`.
+The capture logic in [`src-tauri/src/logic.rs`](src-tauri/src/logic.rs) is the same on both platforms. What differs lives in [`src-tauri/src/platform/`](src-tauri/src/platform/):
+
+- **Linux** reads and watches the Wayland primary selection with `wl-paste`, copies with `wl-copy`, reads the active window with `hyprctl` and notifies with `notify-send`. On Wayland the primary selection stays available after nothing looks selected, so Patina watches its changes to tell fresh selections from stale ones.
+- **Windows** detects double Shift with a low-level keyboard hook and copies the selection with a simulated Ctrl+C. It also registers the native messaging host in the registry, the global shortcut, the tray icon and autostart.
+
+On Linux, Patina sets `WEBKIT_DISABLE_DMABUF_RENDERER=1` before starting WebKitGTK. Without it, the window crashes with "Error 71 (Protocol error)" on Wayland with NVIDIA drivers.
+
+## Build from source
+
+The build runs in a Fedora container, so the only thing you need installed is `podman`:
+
+```sh
+scripts/build.sh test      # Rust and interface tests
+scripts/build.sh linux     # .deb, .rpm and AppImage
+scripts/build.sh windows   # Windows installer, cross-compiled
+```
+
+The installers end up in `src-tauri/target/release/bundle/` and `src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/`. Pushing a `v*` tag builds the same installers on GitHub Actions and attaches them to a draft release.
+
+### Tests
+
+- `scripts/build.sh test` runs the Rust tests and the interface tests. Both check the port against [`tests/parity.json`](tests/parity.json), which came from running the Python version. [`scripts/parity/gen_fixtures.py`](scripts/parity/gen_fixtures.py) regenerates it.
+- `scripts/in-container.sh scripts/e2e/run.sh` drives the real app in a headless Sway inside the container, with a virtual mouse and keyboard. It checks every action against the data files and the clipboard. It never touches your desktop. Screenshots end up in `scripts/e2e/out/`.
+- `tests/ui/dev.html` loads the interface in a normal browser with a mock backend. Serve the repo root with `python3 -m http.server` and open `/tests/ui/dev.html`.
 
 ## Uninstall
 
-```sh
-./uninstall.sh          # removes the command and the native host, keeps your data
-./uninstall.sh --purge  # also deletes ~/.local/share/patina
-```
+Remove the package (`sudo dnf remove patina`, `sudo apt remove patina`, or **Settings → Apps** on Windows), the Patina line from your Hyprland config, and the extension. Patina also leaves the native messaging registration behind:
+
+- Linux: `rm ~/.config/*/NativeMessagingHosts/io.github.lautarosegura.patina.json ~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/io.github.lautarosegura.patina.json`
+- Windows: the `io.github.lautarosegura.patina` keys under `HKEY_CURRENT_USER\Software\<browser>\NativeMessagingHosts`
+
+To delete your data too, remove the data folder listed above.
 
 ## License
 

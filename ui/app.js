@@ -149,11 +149,8 @@ function favicon(item) {
   return fallback;
 }
 
-function itemColumn(item, tab) {
+function itemColumn(item) {
   const column = element('div', 'item-column');
-  column.title = tab === 'queue'
-    ? 'Enter, Ctrl+C o doble click: copiar y volver a la app · Espacio: tachar · Supr: borrar'
-    : 'Enter, Ctrl+C o doble click: copiar · Ctrl+Z: devolver a la cola · Supr: borrar para siempre';
   const text = element('div', 'item-text');
   for (const segment of linkSegments(item.text)) {
     text.append(segment.link === undefined ? document.createTextNode(segment.text) : link(segment.link, segment.link));
@@ -240,7 +237,7 @@ function row(item, tab, index) {
     check.addEventListener('change', () => void mutate('set_done', { id: item.id, done: check.checked }));
     node.append(check);
   }
-  node.append(itemColumn(item, tab), copyButton(item));
+  node.append(itemColumn(item), copyButton(item));
   if (tab === 'history') {
     const restore = element('button', 'icon-button restore');
     restore.type = 'button';

@@ -1,0 +1,13 @@
+{
+  "name": "patina",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "test:ui": "node --test ui/test/"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

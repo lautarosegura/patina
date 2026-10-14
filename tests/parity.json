@@ -1,0 +1,1631 @@
+{
+ "parse_sent": [
+  {
+   "raw": "8:27 PM, 10/13/2026",
+   "order": "",
+   "expected": "2026-10-13T20:27"
+  },
+  {
+   "raw": "8:27 pm, 10/13/2026",
+   "order": "mdy",
+   "expected": "2026-10-13T20:27"
+  },
+  {
+   "raw": "20:27, 13/10/2026",
+   "order": "dmy",
+   "expected": "2026-10-13T20:27"
+  },
+  {
+   "raw": "20:27, 3/4/2026",
+   "order": "dmy",
+   "expected": "2026-04-03T20:27"
+  },
+  {
+   "raw": "20:27, 3/4/2026",
+   "order": "mdy",
+   "expected": "2026-03-04T20:27"
+  },
+  {
+   "raw": "8:05 a. m., 3/4/2026",
+   "order": "dmy",
+   "expected": "2026-04-03T08:05"
+  },
+  {
+   "raw": "12:10 AM, 1/2/2026",
+   "order": "mdy",
+   "expected": "2026-01-02T00:10"
+  },
+  {
+   "raw": "12:10 PM, 1/2/2026",
+   "order": "mdy",
+   "expected": "2026-01-02T12:10"
+  },
+  {
+   "raw": "9.15, 2026-04-03",
+   "order": "ymd",
+   "expected": "2026-04-03T09:15"
+  },
+  {
+   "raw": "21:00, 2026/12/31",
+   "order": "",
+   "expected": "2026-12-31T21:00"
+  },
+  {
+   "raw": "7:00, 31/12/26",
+   "order": "",
+   "expected": "2026-12-31T07:00"
+  },
+  {
+   "raw": "10:00, 31/02/2026",
+   "order": "dmy",
+   "expected": ""
+  },
+  {
+   "raw": "basura",
+   "order": "",
+   "expected": ""
+  },
+  {
+   "raw": "",
+   "order": "dmy",
+   "expected": ""
+  },
+  {
+   "raw": "20:27",
+   "order": "dmy",
+   "expected": ""
+  }
+ ],
+ "format_sent": [
+  {
+   "sent": "2026-10-13T20:27",
+   "expected": "13/10 20:27"
+  },
+  {
+   "sent": "2026-01-02T00:10:59",
+   "expected": "02/01 00:10"
+  },
+  {
+   "sent": "8:27 PM, 10/13/2026",
+   "expected": "13/10 20:27"
+  },
+  {
+   "sent": "texto raro",
+   "expected": "texto raro"
+  },
+  {
+   "sent": "20:27, 3/4/2026",
+   "expected": "03/04 20:27"
+  }
+ ],
+ "format_time": [
+  {
+   "iso": "2026-10-13T20:27:00",
+   "expected": "13/10 20:27"
+  },
+  {
+   "iso": "2026-01-05T07:03",
+   "expected": "05/01 07:03"
+  },
+  {
+   "iso": "2026-12-31T23:59:59",
+   "expected": "31/12 23:59"
+  }
+ ],
+ "window_source": [
+  {
+   "window": {
+    "class": "brave-browser",
+    "title": "WhatsApp - Brave"
+   },
+   "expected": "WhatsApp"
+  },
+  {
+   "window": {
+    "class": "brave-browser",
+    "title": "(19) WhatsApp Business - Brave"
+   },
+   "expected": "WhatsApp Business"
+  },
+  {
+   "window": {
+    "class": "brave-browser",
+    "title": "Artículo sobre WhatsApp - Brave"
+   },
+   "expected": "brave-browser"
+  },
+  {
+   "window": {
+    "class": "com.t3tools.T3Code",
+    "title": "T3 Code"
+   },
+   "expected": "T3Code"
+  },
+  {
+   "window": {
+    "class": "foot",
+    "title": "~"
+   },
+   "expected": "foot"
+  },
+  {
+   "window": {
+    "class": "",
+    "title": ""
+   },
+   "expected": ""
+  },
+  {
+   "window": {
+    "title": "(3) WhatsApp - Google Chrome"
+   },
+   "expected": "WhatsApp"
+  }
+ ],
+ "linkify": [
+  {
+   "text": "mirá https://github.com/foo/bar.",
+   "expected": [
+    {
+     "text": "mirá "
+    },
+    {
+     "link": "https://github.com/foo/bar"
+    },
+    {
+     "text": "."
+    }
+   ]
+  },
+  {
+   "text": "a<b> (ver https://x.com/a?b=1&c=2)",
+   "expected": [
+    {
+     "text": "a<b> (ver "
+    },
+    {
+     "link": "https://x.com/a?b=1&c=2"
+    },
+    {
+     "text": ")"
+    }
+   ]
+  },
+  {
+   "text": "sin link",
+   "expected": [
+    {
+     "text": "sin link"
+    }
+   ]
+  },
+  {
+   "text": "http://a.com y https://b.com/x),",
+   "expected": [
+    {
+     "link": "http://a.com"
+    },
+    {
+     "text": " y "
+    },
+    {
+     "link": "https://b.com/x"
+    },
+    {
+     "text": "),"
+    }
+   ]
+  },
+  {
+   "text": "https://ejemplo.com/ruta?q=\"citado\"",
+   "expected": [
+    {
+     "link": "https://ejemplo.com/ruta?q="
+    },
+    {
+     "text": "\"citado\""
+    }
+   ]
+  },
+  {
+   "text": "",
+   "expected": []
+  },
+  {
+   "text": "https://solo.com",
+   "expected": [
+    {
+     "link": "https://solo.com"
+    }
+   ]
+  }
+ ],
+ "browser_context": [
+  {
+   "name": "whatsapp coincide",
+   "text": "Mañana te paso el presupuesto",
+   "window_title": "WhatsApp Business - Brave",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "sender": "Juan Pérez",
+    "sent": "2026-10-13T20:27",
+    "chat": "Equipo Ventas"
+   }
+  },
+  {
+   "name": "whatsapp chat individual",
+   "text": "Hola",
+   "window_title": "WhatsApp - Brave",
+   "selection": {
+    "text": "Hola",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "20:27, 13/10/2026",
+      "sender": "Ana"
+     }
+    ],
+    "chat": "Ana",
+    "date_order": "dmy",
+    "received": 1791944199.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "sender": "Ana",
+    "sent": "2026-10-13T20:27"
+   }
+  },
+  {
+   "name": "whatsapp varios remitentes",
+   "text": "uno dos",
+   "window_title": "WhatsApp - Brave",
+   "selection": {
+    "text": "uno\ndos",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "x",
+      "sender": "A"
+     },
+     {
+      "time": "y",
+      "sender": "B"
+     },
+     {
+      "time": "z",
+      "sender": "A"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "sender": "A, B",
+    "sent": "x",
+    "chat": "Equipo Ventas"
+   }
+  },
+  {
+   "name": "x con menciones",
+   "text": "here's a prompt you can try asking \n@bot\n:\n\ncreate",
+   "window_title": "lauren on X - Brave",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "url": "https://x.com/p/1",
+    "title": "lauren on X",
+    "host": "x.com",
+    "favicon": "x.png"
+   }
+  },
+  {
+   "name": "selección vieja (11 min)",
+   "text": "Mañana te paso el presupuesto",
+   "window_title": "foot",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791943544.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {}
+  },
+  {
+   "name": "texto contenido en la selección",
+   "text": "presupuesto",
+   "window_title": "foot",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "sender": "Juan Pérez",
+    "sent": "2026-10-13T20:27",
+    "chat": "Equipo Ventas"
+   }
+  },
+  {
+   "name": "barra de direcciones",
+   "text": "https://www.youtube.com/watch?v=abc",
+   "window_title": "Video - YouTube - Brave",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791944144.5173926
+   },
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "url": "https://www.youtube.com/watch?v=abc",
+    "title": "Video - YouTube",
+    "host": "www.youtube.com",
+    "favicon": "yt.png"
+   }
+  },
+  {
+   "name": "pestaña de otra ventana",
+   "text": "https://www.youtube.com/watch?v=abc",
+   "window_title": "Otra - Brave",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791944144.5173926
+   },
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com"
+   }
+  },
+  {
+   "name": "url con favicon guardado",
+   "text": "https://github.com/foo",
+   "window_title": "foot",
+   "selection": null,
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "url": "https://github.com/foo",
+    "host": "github.com",
+    "favicon": "3aeb002460381c6f258e.png"
+   }
+  },
+  {
+   "name": "url sin favicon",
+   "text": "https://example.com/x",
+   "window_title": "foot",
+   "selection": null,
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {
+    "url": "https://example.com/x",
+    "host": "example.com"
+   }
+  },
+  {
+   "name": "texto común",
+   "text": "hola mundo",
+   "window_title": "foot",
+   "selection": null,
+   "page": null,
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {}
+  },
+  {
+   "name": "texto vacío",
+   "text": "   ",
+   "window_title": "foot",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791944144.5173926
+   },
+   "favicons": [
+    "github.com"
+   ],
+   "now": 1791944204.5173926,
+   "expected": {}
+  }
+ ],
+ "page_text": [
+  {
+   "name": "whatsapp coincide",
+   "text": "Mañana te paso el presupuesto",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "Mañana te paso el\npresupuesto"
+  },
+  {
+   "name": "whatsapp chat individual",
+   "text": "Hola",
+   "selection": {
+    "text": "Hola",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "20:27, 13/10/2026",
+      "sender": "Ana"
+     }
+    ],
+    "chat": "Ana",
+    "date_order": "dmy",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "Hola"
+  },
+  {
+   "name": "whatsapp varios remitentes",
+   "text": "uno dos",
+   "selection": {
+    "text": "uno\ndos",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "x",
+      "sender": "A"
+     },
+     {
+      "time": "y",
+      "sender": "B"
+     },
+     {
+      "time": "z",
+      "sender": "A"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "uno\ndos"
+  },
+  {
+   "name": "x con menciones",
+   "text": "here's a prompt you can try asking \n@bot\n:\n\ncreate",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "here's a prompt you can try asking @bot:\n\ncreate"
+  },
+  {
+   "name": "selección vieja (11 min)",
+   "text": "Mañana te paso el presupuesto",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791943544.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "Mañana te paso el presupuesto"
+  },
+  {
+   "name": "texto contenido en la selección",
+   "text": "presupuesto",
+   "selection": {
+    "text": "Mañana te paso el\npresupuesto",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "wa.png",
+    "messages": [
+     {
+      "time": "8:27 PM, 10/13/2026",
+      "sender": "Juan Pérez"
+     }
+    ],
+    "chat": "Equipo Ventas",
+    "date_order": "mdy",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "presupuesto"
+  },
+  {
+   "name": "barra de direcciones",
+   "text": "https://www.youtube.com/watch?v=abc",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "https://www.youtube.com/watch?v=abc"
+  },
+  {
+   "name": "pestaña de otra ventana",
+   "text": "https://www.youtube.com/watch?v=abc",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "https://www.youtube.com/watch?v=abc"
+  },
+  {
+   "name": "url con favicon guardado",
+   "text": "https://github.com/foo",
+   "selection": null,
+   "now": 1791944204.5173926,
+   "expected": "https://github.com/foo"
+  },
+  {
+   "name": "url sin favicon",
+   "text": "https://example.com/x",
+   "selection": null,
+   "now": 1791944204.5173926,
+   "expected": "https://example.com/x"
+  },
+  {
+   "name": "texto común",
+   "text": "hola mundo",
+   "selection": null,
+   "now": 1791944204.5173926,
+   "expected": "hola mundo"
+  },
+  {
+   "name": "texto vacío",
+   "text": "   ",
+   "selection": {
+    "text": "here's a prompt you can try asking @bot:\n\ncreate",
+    "url": "https://x.com/p/1",
+    "host": "x.com",
+    "title": "lauren on X",
+    "favicon": "x.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": 1791944199.5173926
+   },
+   "now": 1791944204.5173926,
+   "expected": "   "
+  }
+ ],
+ "native_host": [
+  {
+   "name": "selección web con favicon",
+   "messages": [
+    "{\"text\": \"hola\", \"url\": \"https://github.com/a\", \"title\": \"A\", \"favicon\": \"iVBORw0KGgoAAAAAAAAAAAAAAAAAAAAA\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "hola",
+    "url": "https://github.com/a",
+    "host": "github.com",
+    "title": "A",
+    "favicon": "3aeb002460381c6f258e.png",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": [
+    "3aeb002460381c6f258e.png"
+   ]
+  },
+  {
+   "name": "favicon que no es png",
+   "messages": [
+    "{\"text\": \"hola\", \"url\": \"https://evil.example/\", \"favicon\": \"PHN2Zy8+\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "hola",
+    "url": "https://evil.example/",
+    "host": "evil.example",
+    "title": "",
+    "favicon": "",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "favicon base64 inválido",
+   "messages": [
+    "{\"text\": \"hola\", \"url\": \"https://evil.example/\", \"favicon\": \"@@@\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "hola",
+    "url": "https://evil.example/",
+    "host": "evil.example",
+    "title": "",
+    "favicon": "",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "whatsapp",
+   "messages": [
+    "{\"text\": \"msg\", \"url\": \"https://web.whatsapp.com/\", \"title\": \"WhatsApp\", \"messages\": [{\"time\": \"20:27, 13/10/2026\", \"sender\": \"Ana\"}], \"chat\": \"Grupo\", \"dateOrder\": \"dmy\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "msg",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "WhatsApp",
+    "favicon": "",
+    "messages": [
+     {
+      "time": "20:27, 13/10/2026",
+      "sender": "Ana"
+     }
+    ],
+    "chat": "Grupo",
+    "date_order": "dmy",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "orden de fecha inválido",
+   "messages": [
+    "{\"text\": \"msg\", \"url\": \"https://web.whatsapp.com/\", \"messages\": [], \"dateOrder\": \"xyz\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "msg",
+    "url": "https://web.whatsapp.com/",
+    "host": "web.whatsapp.com",
+    "title": "",
+    "favicon": "",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "selección vacía",
+   "messages": [
+    "{\"text\": \"\", \"url\": \"https://x.com/\", \"title\": \"X\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {
+    "text": "",
+    "url": "https://x.com/",
+    "host": "x.com",
+    "title": "X",
+    "favicon": "",
+    "messages": [],
+    "chat": "",
+    "date_order": "",
+    "received": "now"
+   },
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "sin text",
+   "messages": [
+    "{\"url\": \"https://x.com/\"}"
+   ],
+   "replies": [
+    {
+     "ok": false
+    }
+   ],
+   "selection": {},
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "json roto",
+   "messages": [
+    "{no es json"
+   ],
+   "replies": [
+    {
+     "ok": false
+    }
+   ],
+   "selection": {},
+   "page": {},
+   "favicons": []
+  },
+  {
+   "name": "página",
+   "messages": [
+    "{\"kind\": \"page\", \"tab\": 7, \"url\": \"https://youtube.com/w\", \"title\": \"Video\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    }
+   ],
+   "selection": {},
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://youtube.com/w",
+    "host": "youtube.com",
+    "title": "Video",
+    "favicon": "",
+    "since": "now",
+    "received": "now"
+   },
+   "favicons": []
+  },
+  {
+   "name": "página: cambia el título",
+   "messages": [
+    "{\"kind\": \"page\", \"tab\": 7, \"url\": \"https://youtube.com/w\", \"title\": \"Video\"}",
+    "{\"kind\": \"page\", \"tab\": 7, \"url\": \"https://youtube.com/w\", \"title\": \"(1) Video\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    },
+    {
+     "ok": true
+    }
+   ],
+   "selection": {},
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://youtube.com/w",
+    "host": "youtube.com",
+    "title": "(1) Video",
+    "favicon": "",
+    "since": "kept",
+    "received": "now"
+   },
+   "favicons": []
+  },
+  {
+   "name": "página: cambia la pestaña",
+   "messages": [
+    "{\"kind\": \"page\", \"tab\": 7, \"url\": \"https://youtube.com/w\", \"title\": \"Video\"}",
+    "{\"kind\": \"page\", \"tab\": 8, \"url\": \"https://youtube.com/w\", \"title\": \"Video\"}"
+   ],
+   "replies": [
+    {
+     "ok": true
+    },
+    {
+     "ok": true
+    }
+   ],
+   "selection": {},
+   "page": {
+    "kind": "page",
+    "tab": "8",
+    "url": "https://youtube.com/w",
+    "host": "youtube.com",
+    "title": "Video",
+    "favicon": "",
+    "since": "now",
+    "received": "now"
+   },
+   "favicons": []
+  }
+ ],
+ "store": [
+  {
+   "op": [
+    "add",
+    "prompt",
+    "uno",
+    "",
+    null
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "add",
+    "prompt",
+    "uno",
+    "",
+    null
+   ],
+   "result": false,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "add",
+    "capture",
+    "\n\ndos\n",
+    "foot",
+    {
+     "host": "x.com"
+    }
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "add",
+    "prompt",
+    "   ",
+    "",
+    null
+   ],
+   "result": false,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "done",
+    0
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": true
+    },
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "add",
+    "prompt",
+    "uno",
+    "",
+    null
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": true
+    },
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "archive_done"
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": true,
+     "archived": "<ts>"
+    }
+   ]
+  },
+  {
+   "op": [
+    "restore",
+    0
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "forget_first"
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "add",
+    "prompt",
+    "tres",
+    "",
+    null
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com"
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "tres",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": []
+  },
+  {
+   "op": [
+    "delete",
+    0
+   ],
+   "result": true,
+   "items": [
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "uno",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    },
+    {
+     "kind": "prompt",
+     "text": "tres",
+     "source": "",
+     "created": "<ts>",
+     "done": false
+    }
+   ],
+   "history": [
+    {
+     "kind": "capture",
+     "text": "dos",
+     "source": "foot",
+     "created": "<ts>",
+     "done": false,
+     "host": "x.com",
+     "archived": "<ts>"
+    }
+   ]
+  }
+ ],
+ "capture": [
+  {
+   "name": "selección nueva fuera de Brave",
+   "primary": "texto A",
+   "changed_ago": 1,
+   "captured_ago": null,
+   "window_title": "foot",
+   "page": null,
+   "selection": null,
+   "expected": {
+    "now": 1791944204.999603,
+    "item": {
+     "text": "texto A",
+     "source": "foot"
+    },
+    "notified": [
+     "Capturado en Patina"
+    ],
+    "consumed": true
+   }
+  },
+  {
+   "name": "ya capturada",
+   "primary": "texto A",
+   "changed_ago": 5,
+   "captured_ago": 2,
+   "window_title": "foot",
+   "page": null,
+   "selection": null,
+   "expected": {
+    "now": 1791944204.99972,
+    "item": null,
+    "notified": [
+     "Patina"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "vencida (más de 10 s)",
+   "primary": "texto B",
+   "changed_ago": 15,
+   "captured_ago": null,
+   "window_title": "foot",
+   "page": null,
+   "selection": null,
+   "expected": {
+    "now": 1791944204.9997504,
+    "item": null,
+    "notified": [
+     "Patina"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "sin vigilante: se acepta",
+   "primary": "texto C",
+   "changed_ago": null,
+   "captured_ago": null,
+   "window_title": "foot",
+   "page": null,
+   "selection": null,
+   "expected": {
+    "now": 1791944204.9997673,
+    "item": {
+     "text": "texto C",
+     "source": "foot"
+    },
+    "notified": [
+     "Capturado en Patina"
+    ],
+    "consumed": true
+   }
+  },
+  {
+   "name": "vacía fuera de Brave",
+   "primary": "",
+   "changed_ago": 1,
+   "captured_ago": null,
+   "window_title": "foot",
+   "page": null,
+   "selection": null,
+   "expected": {
+    "now": 1791944204.9998055,
+    "item": null,
+    "notified": [
+     "Patina"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "Brave: texto nuevo en la página",
+   "primary": "texto D",
+   "changed_ago": 1,
+   "captured_ago": null,
+   "window_title": "Video - YouTube - Brave",
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791943604.999587,
+    "received": 1791944204.9995873
+   },
+   "selection": null,
+   "expected": {
+    "now": 1791944204.9998236,
+    "item": {
+     "text": "texto D",
+     "source": "brave-browser",
+     "url": "https://www.youtube.com/watch?v=abc",
+     "title": "Video - YouTube",
+     "host": "www.youtube.com"
+    },
+    "notified": [
+     "Capturado en Patina"
+    ],
+    "consumed": true
+   }
+  },
+  {
+   "name": "Brave: selección de antes de la pestaña",
+   "primary": "texto viejo",
+   "changed_ago": 5,
+   "captured_ago": null,
+   "window_title": "Video - YouTube - Brave",
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791944202.9995837,
+    "received": 1791944204.9995863
+   },
+   "selection": null,
+   "expected": {
+    "now": 1791944205.000007,
+    "item": {
+     "text": "https://www.youtube.com/watch?v=abc",
+     "source": "brave-browser",
+     "url": "https://www.youtube.com/watch?v=abc",
+     "title": "Video - YouTube",
+     "host": "www.youtube.com"
+    },
+    "notified": [
+     "Capturada la página"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "Brave: deseleccionó en la página",
+   "primary": "texto E",
+   "changed_ago": 3,
+   "captured_ago": null,
+   "window_title": "Video - YouTube - Brave",
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791943604.999587,
+    "received": 1791944204.9995873
+   },
+   "selection": {
+    "text": "",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "received": 1791944203.99959
+   },
+   "expected": {
+    "now": 1791944205.0000756,
+    "item": {
+     "text": "https://www.youtube.com/watch?v=abc",
+     "source": "brave-browser",
+     "url": "https://www.youtube.com/watch?v=abc",
+     "title": "Video - YouTube",
+     "host": "www.youtube.com"
+    },
+    "notified": [
+     "Capturada la página"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "Brave: nada seleccionado",
+   "primary": "",
+   "changed_ago": 1,
+   "captured_ago": null,
+   "window_title": "Video - YouTube - Brave",
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791943604.999587,
+    "received": 1791944204.9995873
+   },
+   "selection": null,
+   "expected": {
+    "now": 1791944205.000253,
+    "item": {
+     "text": "https://www.youtube.com/watch?v=abc",
+     "source": "brave-browser",
+     "url": "https://www.youtube.com/watch?v=abc",
+     "title": "Video - YouTube",
+     "host": "www.youtube.com"
+    },
+    "notified": [
+     "Capturada la página"
+    ],
+    "consumed": false
+   }
+  },
+  {
+   "name": "Brave: otra ventana con otro título",
+   "primary": "texto F",
+   "changed_ago": 1,
+   "captured_ago": null,
+   "window_title": "Otra cosa - Brave",
+   "page": {
+    "kind": "page",
+    "tab": "7",
+    "url": "https://www.youtube.com/watch?v=abc",
+    "host": "www.youtube.com",
+    "title": "Video - YouTube",
+    "favicon": "yt.png",
+    "since": 1791943604.999587,
+    "received": 1791944204.9995873
+   },
+   "selection": null,
+   "expected": {
+    "now": 1791944205.0003438,
+    "item": {
+     "text": "texto F",
+     "source": "brave-browser"
+    },
+    "notified": [
+     "Capturado en Patina"
+    ],
+    "consumed": true
+   }
+  }
+ ]
+}

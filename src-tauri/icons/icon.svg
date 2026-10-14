@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e3a57c"/>
+      <stop offset="0.55" stop-color="#b87333"/>
+      <stop offset="1" stop-color="#7a4a22"/>
+    </linearGradient>
+    <linearGradient id="patina" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2f8f7f"/>
+      <stop offset="1" stop-color="#6cc4a8"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#copper)"/>
+  <path d="M64 700 C 260 600, 420 820, 640 720 S 900 640, 960 700 L 960 752 Q 960 960 752 960 L 272 960 Q 64 960 64 752 Z" fill="url(#patina)"/>
+  <rect x="300" y="250" width="424" height="76" rx="38" fill="#fff" opacity="0.95"/>
+  <rect x="300" y="390" width="330" height="76" rx="38" fill="#fff" opacity="0.8"/>
+  <rect x="300" y="530" width="380" height="76" rx="38" fill="#fff" opacity="0.65"/>
+</svg>

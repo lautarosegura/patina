@@ -1,0 +1,18 @@
+# Entorno de compilación de Patina: binario de Linux, instaladores (deb, rpm) y compilación cruzada a Windows.
+FROM registry.fedoraproject.org/fedora:44
+
+RUN dnf install -y --setopt=install_weak_deps=False \
+        gcc gcc-c++ clang lld llvm pkgconf-pkg-config file git curl \
+        webkit2gtk4.1-devel gtk3-devel libsoup3-devel openssl-devel librsvg2-devel \
+        nodejs npm mingw32-nsis rpm-build dpkg \
+    && dnf clean all
+
+ENV RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable \
+    && rustup target add x86_64-pc-windows-msvc \
+    && cargo install --locked cargo-xwin \
+    && chmod -R a+rwX /opt/cargo /opt/rustup
+
+# cargo-xwin descarga el CRT y el SDK de Windows de Microsoft; requiere aceptar su licencia.
+ENV XWIN_ACCEPT_LICENSE=1
+WORKDIR /src

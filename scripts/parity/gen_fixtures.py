@@ -1,6 +1,7 @@
 """Genera tests/parity.json ejecutando la versión Python de Patina (la referencia del port).
 
-Uso: python3 -I scripts/parity/gen_fixtures.py <ruta al patina de Python> <salida.json>
+La referencia es la última versión en Python: git show 79ebd1c:patina > /tmp/patina-py
+Uso: python3 -I scripts/parity/gen_fixtures.py /tmp/patina-py tests/parity.json
 Los tests de Rust (src-tauri/src/parity_tests.rs) leen el JSON y exigen los mismos resultados.
 """
 

@@ -1,6 +1,7 @@
 """Compara el host nativo de dos ejecutables (Python de referencia y el port) por stdin/stdout.
 
 Uso: python3 -I scripts/parity/host_binary.py <patina de referencia> <patina nuevo>
+La referencia Python sale de: git show 79ebd1c:patina > /tmp/patina-py && chmod +x /tmp/patina-py
 Cada caso corre un proceso por mensaje, como el navegador. Imprime una línea por caso y sale
 con 1 si alguno difiere.
 """

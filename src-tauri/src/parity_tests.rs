@@ -11,7 +11,9 @@ use crate::model::{Context, Kind, Page, Selection, Window};
 use crate::store::Store;
 
 static FIXTURES: LazyLock<Value> = LazyLock::new(|| {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../tests/parity.json");
+    // PATINA_PARITY lets the Windows test binary, run under Wine, find the file outside the container.
+    let path = std::env::var("PATINA_PARITY")
+        .unwrap_or_else(|_| concat!(env!("CARGO_MANIFEST_DIR"), "/../tests/parity.json").to_string());
     serde_json::from_str(&std::fs::read_to_string(path).expect("tests/parity.json")).expect("valid json")
 });
 

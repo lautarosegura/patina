@@ -8,6 +8,7 @@ pub struct Paths {
     pub favicons: PathBuf,
     pub selection: PathBuf,
     pub page: PathBuf,
+    #[cfg(target_os = "linux")]
     pub shift_stamp: PathBuf,
 }
 
@@ -20,6 +21,7 @@ impl Paths {
             data,
             selection: runtime.join("patina-selection.json"),
             page: runtime.join("patina-page.json"),
+            #[cfg(target_os = "linux")]
             shift_stamp: runtime.join("patina-shift"),
         }
     }

@@ -51,6 +51,7 @@ impl Store {
     }
 
     /// A store that never touches disk, for tests.
+    #[cfg(test)]
     pub fn in_memory() -> Self {
         Store { items: Vec::new(), history: Vec::new(), dir: None }
     }

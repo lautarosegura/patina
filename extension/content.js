@@ -112,7 +112,21 @@ function escapeHtml(text) {
   return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 }
 
+// Como visibleText, que no entra en elementos ocultos: un texto bajo un ancestro oculto no se ve.
+function hiddenChecker() {
+  const hidden = new Map();
+  return function isHidden(element) {
+    if (!element) return false;
+    if (!hidden.has(element)) {
+      const style = getComputedStyle(element);
+      hidden.set(element, style.display === "none" || style.visibility === "hidden" || isHidden(element.parentElement));
+    }
+    return hidden.get(element);
+  };
+}
+
 function formattedHtml(range) {
+  const isHidden = hiddenChecker();
   const root = range.commonAncestorContainer;
   const walker = document.createTreeWalker(root.nodeType === Node.TEXT_NODE ? root.parentNode : root, NodeFilter.SHOW_TEXT);
   let html = "";
@@ -124,8 +138,8 @@ function formattedHtml(range) {
     if (node === range.endContainer) text = text.slice(0, range.endOffset);
     if (node === range.startContainer) text = text.slice(range.startOffset);
     if (!text.trim()) continue;
+    if (isHidden(node.parentElement)) continue;
     const style = getComputedStyle(node.parentElement);
-    if (style.display === "none" || style.visibility === "hidden") continue;
     let part = escapeHtml(text);
     if (MONOSPACE.test(style.fontFamily)) part = `<code>${part}</code>`;
     if (Number(style.fontWeight) >= 600) part = `<b>${part}</b>`;

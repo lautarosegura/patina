@@ -11,6 +11,9 @@ pub const SELECTION_MAX_AGE_S: f64 = 600.0;
 /// stays available even after nothing looks selected on screen.
 pub const PRIMARY_MAX_AGE_S: f64 = 10.0;
 
+/// Formatting is a nice-to-have: a larger HTML selection is saved as plain text.
+pub const MAX_HTML_BYTES: usize = 64 * 1024;
+
 pub static URL_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"https?://[^\s<>"']+"#).unwrap());
 // Both WhatsApp instances are browser windows; only the title tells them apart:
 // "WhatsApp - Brave" and "(19) WhatsApp Business - Brave".
@@ -91,6 +94,10 @@ pub fn no_spaces(text: &str) -> String {
     text.split_whitespace().collect()
 }
 
+pub fn bounded_html(html: String) -> Option<String> {
+    (!html.trim().is_empty() && html.len() <= MAX_HTML_BYTES).then_some(html)
+}
+
 fn recent(selection: &Selection, now: f64) -> bool {
     now - selection.received <= SELECTION_MAX_AGE_S
 }
@@ -98,9 +105,21 @@ fn recent(selection: &Selection, now: f64) -> bool {
 /// Chromium breaks lines around inline-flex elements such as X
 /// mentions ("asking \n@bot\n:"); the extension keeps them as they look.
 pub fn page_text(text: &str, selection: Option<&Selection>, now: f64) -> String {
-    match selection {
-        Some(s) if recent(s, now) && !s.text.trim().is_empty() && no_spaces(&s.text) == no_spaces(text) => s.text.clone(),
-        _ => text.to_string(),
+    match same_selection(text, selection, now) {
+        Some(s) => s.text.clone(),
+        None => text.to_string(),
+    }
+}
+
+fn same_selection<'a>(text: &str, selection: Option<&'a Selection>, now: f64) -> Option<&'a Selection> {
+    selection.filter(|s| recent(s, now) && !s.text.trim().is_empty() && no_spaces(&s.text) == no_spaces(text))
+}
+
+/// The extension's HTML carries the page's computed styles, so it wins over the system selection's.
+pub fn selection_html(text: &str, primary_html: &str, selection: Option<&Selection>, now: f64) -> Option<String> {
+    match same_selection(text, selection, now) {
+        Some(s) if !s.html.is_empty() => Some(s.html.clone()),
+        _ => bounded_html(primary_html.to_string()),
     }
 }
 
@@ -187,6 +206,7 @@ pub enum Capture {
 
 pub struct CaptureInput<'a> {
     pub selection_text: &'a str,
+    pub selection_html: &'a str,
     pub clock: SelectionClock,
     pub now: f64,
     pub window: &'a Window,
@@ -199,7 +219,7 @@ fn selection_cleared_on(selection: &Selection, page: &Page, changed_at: Option<f
 }
 
 pub fn decide_capture(input: &CaptureInput, favicon_exists: &dyn Fn(&str) -> bool) -> Capture {
-    let CaptureInput { selection_text, clock, now, window, page, selection } = *input;
+    let CaptureInput { selection_text, selection_html: primary_html, clock, now, window, page, selection } = *input;
     let changed = clock.changed_at;
     let mut fresh = changed.map_or(true, |changed| {
         changed > clock.captured_at.unwrap_or(0.0) && now - changed <= PRIMARY_MAX_AGE_S
@@ -223,7 +243,10 @@ pub fn decide_capture(input: &CaptureInput, favicon_exists: &dyn Fn(&str) -> boo
         (false, None) => Capture::Nothing,
         (true, _) => Capture::Text {
             text: page_text(selection_text, selection, now),
-            context: browser_context(selection_text, &window.title, selection, input.page, now, favicon_exists),
+            context: Context {
+                html: selection_html(selection_text, primary_html, selection, now),
+                ..browser_context(selection_text, &window.title, selection, input.page, now, favicon_exists)
+            },
         },
     }
 }
@@ -262,5 +285,34 @@ pub fn apply_capture(store: &mut crate::store::Store, capture: Capture, source: 
             let added = store.add(Kind::Capture, &text, source, context);
             Applied { notice: added.then(|| capture_notice(&text, sender.as_deref())), consumed: true }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{selection_html, MAX_HTML_BYTES};
+    use crate::model::Selection;
+
+    fn extension(text: &str, html: &str) -> Selection {
+        Selection { text: text.into(), html: html.into(), received: 100.0, ..Selection::default() }
+    }
+
+    #[test]
+    fn extension_html_wins_when_its_selection_matches() {
+        let selection = extension("hola  mundo", "<b>hola</b> mundo");
+        assert_eq!(selection_html("hola mundo", "<p>hola mundo</p>", Some(&selection), 101.0).as_deref(), Some("<b>hola</b> mundo"));
+    }
+
+    #[test]
+    fn primary_html_is_used_when_the_extension_saw_something_else() {
+        let selection = extension("otra cosa", "<b>otra</b> cosa");
+        assert_eq!(selection_html("hola", "<i>hola</i>", Some(&selection), 101.0).as_deref(), Some("<i>hola</i>"));
+        assert_eq!(selection_html("hola", "<i>hola</i>", None, 101.0).as_deref(), Some("<i>hola</i>"));
+    }
+
+    #[test]
+    fn missing_or_oversized_html_is_dropped() {
+        assert_eq!(selection_html("hola", "", None, 0.0), None);
+        assert_eq!(selection_html("hola", &"x".repeat(MAX_HTML_BYTES + 1), None, 0.0), None);
     }
 }

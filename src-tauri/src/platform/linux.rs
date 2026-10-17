@@ -58,11 +58,16 @@ pub fn active_window() -> Window {
     Window { app_id: field("class"), title: field("title") }
 }
 
-pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
-    (
-        stdout_or_empty("wl-paste", &["--primary", "--no-newline", "--type", "text"], Duration::from_secs(2)),
-        *clock.lock().unwrap(),
-    )
+/// The selected text, its HTML if the source app offers one (browsers, LibreOffice; terminals
+/// don't), and the clock.
+pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, String, SelectionClock) {
+    let text = stdout_or_empty("wl-paste", &["--primary", "--no-newline", "--type", "text"], Duration::from_secs(2));
+    let html = if text.trim().is_empty() {
+        String::new()
+    } else {
+        stdout_or_empty("wl-paste", &["--primary", "--no-newline", "--type", "text/html"], Duration::from_secs(1))
+    };
+    (text, html, *clock.lock().unwrap())
 }
 
 fn consume_initial_selection(reader: &mut impl BufRead, clock: &Mutex<SelectionClock>) -> bool {

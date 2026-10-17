@@ -1,12 +1,17 @@
-import { formatTime, formatSent, linkSegments } from './format.js';
+import { formatTime, formatSent, linkSegments, richSegments } from './format.js';
 
 const tauri = window.__TAURI__;
 const $ = (selector) => document.querySelector(selector);
 const entry = $('#prompt-entry');
-const search = $('#history-search');
+const search = $('#search');
+const menu = $('#menu');
+const menuButton = $('#menu-button');
 const notes = $('#notes-text');
 const lists = { queue: $('#queue-list'), history: $('#history-list') };
 const selection = { queue: -1, history: -1 };
+const queries = { queue: '', history: '' };
+const THEME_KEY = 'patina-theme';
+const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 const copiedUntil = new Map();
 const copyTimers = new Map();
 const favicons = new Map();
@@ -16,16 +21,6 @@ let operations = Promise.resolve();
 let notesTimer;
 let notesRevision = 0;
 let savedNotesRevision = 0;
-
-function updateColumnWidth() {
-  const available = Math.max(0, window.innerWidth - 24);
-  const progress = Math.max(0, Math.min(1, (available - 600) / 360));
-  const width = available <= 600 ? available : Math.ceil(600 + 120 * (1 - (1 - progress) ** 3));
-  document.documentElement.style.setProperty('--column-width', `${width}px`);
-}
-
-updateColumnWidth();
-window.addEventListener('resize', updateColumnWidth);
 
 const icons = {
   check: '<path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -74,37 +69,56 @@ function pythonCasefold(text) {
 }
 
 function visibleItems(tab) {
-  if (tab === 'queue') return state.items;
-  const query = pythonCasefold(search.value.trim());
-  return [...state.history].reverse().filter((item) => !query ||
+  const query = pythonCasefold(queries[tab].trim());
+  const items = tab === 'queue' ? state.items : [...state.history].reverse();
+  return items.filter((item) => !query ||
     pythonCasefold(['text', 'source', 'sender', 'chat', 'host', 'title']
       .map((key) => item[key] || '').join(' ')).includes(query));
 }
 
+function rows(tab) {
+  return [...lists[tab].querySelectorAll('.row')];
+}
+
+function applyTheme() {
+  const choice = localStorage.getItem(THEME_KEY) || 'system';
+  const theme = choice === 'system' ? (darkScheme.matches ? 'dark' : 'light') : choice;
+  document.documentElement.dataset.theme = theme;
+  for (const item of menu.querySelectorAll('[data-theme]')) item.setAttribute('aria-checked', String(item.dataset.theme === choice));
+}
+
+function openMenu(open) {
+  menu.hidden = !open;
+  menuButton.setAttribute('aria-expanded', String(open));
+  if (open) (menu.querySelector('[aria-checked="true"]') || menu.querySelector('.menu-item')).focus();
+}
+
 function select(tab, index, focus = true) {
-  const rows = [...lists[tab].children];
-  selection[tab] = rows.length ? Math.max(0, Math.min(index, rows.length - 1)) : -1;
-  rows.forEach((row, i) => {
+  const tabRows = rows(tab);
+  selection[tab] = tabRows.length ? Math.max(0, Math.min(index, tabRows.length - 1)) : -1;
+  tabRows.forEach((row, i) => {
     const selected = i === selection[tab];
     row.classList.toggle('selected', selected);
     row.setAttribute('aria-selected', String(selected));
     row.tabIndex = selected ? 0 : -1;
   });
   if (focus && selection[tab] >= 0) {
-    rows[selection[tab]].focus({ preventScroll: true });
-    rows[selection[tab]].scrollIntoView({ block: 'nearest' });
+    tabRows[selection[tab]].focus({ preventScroll: true });
+    tabRows[selection[tab]].scrollIntoView({ block: 'nearest' });
   }
 }
 
 function setTab(tab, focus = false) {
   activeTab = tab;
-  for (const button of document.querySelectorAll('[data-tab]')) {
-    const active = button.dataset.tab === tab;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-selected', String(active));
-    $(`#${button.dataset.tab}`).hidden = !active;
+  for (const view of ['queue', 'notes', 'history']) $(`#${view}`).hidden = view !== tab;
+  for (const item of menu.querySelectorAll('[data-view]')) item.setAttribute('aria-checked', String(item.dataset.view === tab));
+  $('#back').hidden = tab === 'queue';
+  $('#search-wrap').hidden = tab === 'notes';
+  $('#view-title').hidden = tab !== 'notes';
+  if (tab !== 'notes') {
+    search.value = queries[tab];
+    search.placeholder = tab === 'queue' ? 'Buscar' : 'Buscar en el historial';
   }
-  $('#clear-done').hidden = tab !== 'queue';
   if (focus) ({ queue: entry, notes, history: search })[tab].focus();
 }
 
@@ -149,13 +163,73 @@ function favicon(item) {
   return fallback;
 }
 
+function appendLinked(parent, text) {
+  for (const segment of linkSegments(text)) {
+    parent.append(segment.link === undefined ? document.createTextNode(segment.text) : link(segment.link, segment.link));
+  }
+}
+
+const BOLD_TAGS = new Set(['B', 'STRONG', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TH']);
+const ITALIC_TAGS = new Set(['I', 'EM', 'CITE']);
+const CODE_TAGS = new Set(['CODE', 'KBD', 'SAMP', 'TT', 'PRE']);
+const SKIPPED_TAGS = new Set(['HEAD', 'SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT']);
+
+// The closest element that decides a mark wins, so <b><span style="font-weight:400"> is plain.
+function htmlRuns(html) {
+  const body = new DOMParser().parseFromString(html, 'text/html').body;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  const runs = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const run = { text: node.data };
+    let skipped = false;
+    for (let el = node.parentElement; el && el !== body; el = el.parentElement) {
+      if (SKIPPED_TAGS.has(el.tagName)) skipped = true;
+      const weight = el.style.fontWeight;
+      if (run.bold === undefined && (BOLD_TAGS.has(el.tagName) || weight)) {
+        run.bold = weight ? weight === 'bold' || weight === 'bolder' || Number(weight) >= 600 : true;
+      }
+      if (run.italic === undefined && (ITALIC_TAGS.has(el.tagName) || el.style.fontStyle)) {
+        run.italic = el.style.fontStyle ? el.style.fontStyle === 'italic' : true;
+      }
+      if (run.code === undefined && (CODE_TAGS.has(el.tagName) || /mono|courier|consolas|menlo/i.test(el.style.fontFamily))) run.code = true;
+      if (run.href === undefined && el.tagName === 'A' && /^https?:\/\//.test(el.getAttribute('href') || '')) run.href = el.href;
+    }
+    if (!skipped) runs.push(run);
+  }
+  return runs;
+}
+
+function itemText(item) {
+  const text = element('div', 'item-text');
+  let segments = null;
+  if (item.html) {
+    try {
+      segments = richSegments(item.text, htmlRuns(item.html));
+    } catch (error) {
+      console.error('Patina formato:', error);
+    }
+  }
+  if (!segments) {
+    appendLinked(text, item.text);
+    return text;
+  }
+  for (const segment of segments) {
+    const marks = ['bold', 'italic', 'code'].filter((mark) => segment[mark]);
+    const node = segment.href ? link(segment.text, segment.href) : marks.length ? element('span') : text;
+    node.classList?.add(...marks);
+    if (segment.href) text.append(node);
+    else if (node === text) appendLinked(text, segment.text);
+    else {
+      appendLinked(node, segment.text);
+      text.append(node);
+    }
+  }
+  return text;
+}
+
 function itemColumn(item) {
   const column = element('div', 'item-column');
-  const text = element('div', 'item-text');
-  for (const segment of linkSegments(item.text)) {
-    text.append(segment.link === undefined ? document.createTextNode(segment.text) : link(segment.link, segment.link));
-  }
-  column.append(text);
+  column.append(itemText(item));
   const archived = item.archived ? ` · archivado ${formatTime(item.archived)}` : '';
   if (item.sender) {
     const line = element('div', 'meta-line');
@@ -220,7 +294,7 @@ function copyButton(item) {
 }
 
 function row(item, tab, index) {
-  const node = element('div', `row ${item.kind === 'capture' ? 'capture' : ''}${tab === 'queue' && item.done ? ' done' : ''}`);
+  const node = element('div', `row ${tab}-row${item.kind === 'capture' ? ' capture' : ''}${tab === 'queue' && item.done ? ' done' : ''}`);
   node.setAttribute('role', 'option');
   node.setAttribute('aria-selected', 'false');
   node.dataset.id = item.id;
@@ -257,15 +331,39 @@ function row(item, tab, index) {
   return node;
 }
 
+const DAY = 86400000;
+
+function dayLabel(iso) {
+  const day = new Date(`${iso.slice(0, 10)}T00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const ago = Math.round((today - day) / DAY);
+  if (ago === 0) return 'Hoy';
+  if (ago === 1) return 'Ayer';
+  return day.toLocaleDateString('es', { day: 'numeric', month: 'short', year: day.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+}
+
 function renderList(tab) {
   const items = visibleItems(tab);
   const fragment = document.createDocumentFragment();
-  items.forEach((item, index) => fragment.append(row(item, tab, index)));
+  let day = '';
+  items.forEach((item, index) => {
+    // The history is grouped by the day each item left the queue.
+    const itemDay = tab === 'history' ? (item.archived || item.created).slice(0, 10) : '';
+    if (itemDay && itemDay !== day) {
+      day = itemDay;
+      const section = element('div', 'section', dayLabel(itemDay));
+      section.setAttribute('role', 'presentation');
+      fragment.append(section);
+    }
+    fragment.append(row(item, tab, index));
+  });
   lists[tab].replaceChildren(fragment);
   const empty = tab === 'queue' ? state.items.length === 0 : state.history.length === 0;
   $(`#${tab}-empty`).hidden = !empty;
   $(`#${tab}-scroller`).hidden = empty;
   lists[tab].hidden = items.length === 0;
+  $(`#${tab}-no-match`).hidden = empty || items.length > 0;
   if (selection[tab] >= 0) select(tab, selection[tab], activeTab === tab);
 }
 
@@ -294,44 +392,90 @@ function listKey(event, tab) {
   } else if (tab === 'history' && ctrl && key === 'z') {
     void mutate('restore_item', { id: item.id });
   } else if (tab === 'queue' && ctrl && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+    // Moving inside a filtered list would jump over hidden items.
+    if (queries.queue.trim()) return;
     const delta = event.key === 'ArrowUp' ? -1 : 1;
     void mutate('move_item', { id: item.id, delta }, () => {
       select(tab, state.items.findIndex((candidate) => candidate.id === item.id));
     });
   } else if (event.key === 'ArrowUp') {
-    if (tab === 'queue' && selection[tab] === 0) entry.focus();
+    if (selection[tab] === 0) search.focus();
     else select(tab, selection[tab] - 1);
   } else if (event.key === 'ArrowDown') {
-    select(tab, selection[tab] + 1);
+    if (tab === 'queue' && selection[tab] === items.length - 1) entry.focus();
+    else select(tab, selection[tab] + 1);
   } else return;
   event.preventDefault();
   event.stopPropagation();
 }
 
 for (const [tab, list] of Object.entries(lists)) list.addEventListener('keydown', (event) => listKey(event, tab));
-for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => setTab(button.dataset.tab));
+menuButton.addEventListener('click', () => openMenu(menu.hidden));
+menu.addEventListener('click', (event) => {
+  const item = event.target.closest('.menu-item');
+  if (!item) return;
+  openMenu(false);
+  if (item.dataset.view) setTab(item.dataset.view, true);
+  else if (item.dataset.theme) {
+    localStorage.setItem(THEME_KEY, item.dataset.theme);
+    applyTheme();
+  }
+});
+menu.addEventListener('keydown', (event) => {
+  if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+  event.preventDefault();
+  const items = [...menu.querySelectorAll('.menu-item')];
+  const index = items.indexOf(document.activeElement) + (event.key === 'ArrowDown' ? 1 : -1);
+  items[(index + items.length) % items.length].focus();
+});
+document.addEventListener('mousedown', (event) => {
+  if (!menu.hidden && !event.target.closest('#menu, #menu-button')) openMenu(false);
+});
+darkScheme.addEventListener('change', applyTheme);
+$('#back').addEventListener('click', () => setTab('queue', true));
 $('#close').addEventListener('click', () => void run(() => invoke('hide_window')));
 $('#clear-done').addEventListener('click', () => void mutate('clear_done'));
+$('.composer').addEventListener('mousedown', (event) => {
+  if (event.target !== entry) {
+    event.preventDefault();
+    entry.focus();
+  }
+});
+
+function fitEntry() {
+  entry.style.height = 'auto';
+  entry.style.height = `${entry.scrollHeight}px`;
+}
+
+entry.addEventListener('input', fitEntry);
 entry.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.isComposing) {
+  if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
     const text = entry.value;
     event.preventDefault();
     void mutate('add_prompt', { text }, (added) => {
       if (added) {
-        if (entry.value === text) entry.value = '';
+        if (entry.value === text) {
+          entry.value = '';
+          fitEntry();
+        }
         $('#queue-scroller').scrollTop = $('#queue-scroller').scrollHeight;
       }
     });
-  } else if (['ArrowDown', 'Tab'].includes(event.key) && state.items.length) {
+  } else if ((event.key === 'ArrowUp' && entry.selectionStart === 0 && entry.selectionEnd === 0 || event.key === 'Tab' && event.shiftKey)
+    && visibleItems('queue').length) {
     event.preventDefault();
-    select('queue', Math.max(0, selection.queue));
+    select('queue', selection.queue >= 0 ? selection.queue : visibleItems('queue').length - 1);
   }
 });
-search.addEventListener('input', () => { selection.history = -1; renderList('history'); });
+search.addEventListener('input', () => {
+  queries[activeTab] = search.value;
+  selection[activeTab] = -1;
+  renderList(activeTab);
+});
 search.addEventListener('keydown', (event) => {
-  if (['ArrowDown', 'Tab'].includes(event.key) && visibleItems('history').length) {
+  if (['ArrowDown', 'Tab'].includes(event.key) && !event.shiftKey && visibleItems(activeTab).length) {
     event.preventDefault();
-    select('history', 0);
+    select(activeTab, 0);
   }
 });
 notes.addEventListener('input', () => {
@@ -349,7 +493,14 @@ notes.addEventListener('input', () => {
 });
 document.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
-  if (event.key === 'Escape') void run(() => invoke('hide_window'));
+  if (event.key === 'Escape' && !menu.hidden) {
+    openMenu(false);
+    menuButton.focus();
+  } else if (event.key === 'Escape' && document.activeElement === search && search.value) {
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+  } else if (event.key === 'Escape') void run(() => invoke('hide_window'));
+  else if (event.ctrlKey && key === 'f' && activeTab !== 'notes') search.focus();
   else if (event.ctrlKey && ['n', 'l', '1'].includes(key)) setTab('queue', true);
   else if (event.ctrlKey && key === '2') setTab('notes', true);
   else if (event.ctrlKey && key === '3') setTab('history', true);
@@ -360,6 +511,9 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 const WHATSAPP_PATH = '<path fill="#25D366" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>';
+
+applyTheme();
+setTab('queue');
 
 if (tauri) {
   await Promise.all([

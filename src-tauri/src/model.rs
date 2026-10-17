@@ -24,6 +24,10 @@ pub struct Context {
     pub host: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub favicon: Option<String>,
+    /// The selection as HTML, when the source offered it. The UI only borrows its bold, italic,
+    /// code and links, and ignores it if its characters don't match `text`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub html: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -61,6 +65,8 @@ pub struct Selection {
     pub messages: Vec<Message>,
     pub chat: String,
     pub date_order: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub html: String,
     pub received: f64,
 }
 

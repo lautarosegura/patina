@@ -43,9 +43,11 @@
 ## Features
 
 - **Double Shift capture.** Saves the highlighted text with the app it came from and the time. Patina won't capture the same selection twice. On Linux, a selection made more than 10 seconds ago doesn't count either, because Wayland keeps it available after nothing looks selected on screen.
-- **Queue.** Type prompts and copy them with Enter. Links open with a click, and every item has a **Copiar** button.
+- **Queue.** Type prompts in the field at the bottom and copy them with Enter. Links open with a click, and every item has a **Copiar** button. The search field at the top filters the queue.
+- **Formatting.** A capture keeps the bold, italic, code and links of its source when the app offers the selection as HTML: browsers and LibreOffice do, terminals don't. Copying an item still pastes plain text. On Windows, captures are plain text.
 - **Notes.** A scratchpad that saves itself.
-- **History.** Items you clear or delete from the queue are kept, searchable, and can be restored.
+- **History.** Items you clear or delete from the queue are kept, grouped by day, searchable, and can be restored.
+- **Light and dark.** Patina follows the system theme, or the one you pick in the **···** menu.
 - **Browser extension** (Brave, Chrome, Chromium or Edge):
   - A capture remembers its page: favicon, domain, title, and a link back to it.
   - With no fresh selection in the browser, Patina captures the active tab's URL. This also covers the address bar.
@@ -133,8 +135,9 @@ The extension asks for:
 | --- | --- |
 | Capture the highlighted text | <kbd>Shift</kbd> twice (within 350 ms) |
 | Show or hide Patina | <kbd>Super</kbd>+<kbd>C</kbd> on Linux, <kbd>Win</kbd>+<kbd>C</kbd> or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> on Windows |
-| Add a prompt | Type in the field and press <kbd>Enter</kbd> |
-| Move from the field to the list | <kbd>↓</kbd> or <kbd>Tab</kbd> |
+| Add a prompt | Type in the field at the bottom and press <kbd>Enter</kbd>; <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a line |
+| Move from the field to the list | <kbd>↑</kbd> or <kbd>Shift</kbd>+<kbd>Tab</kbd> |
+| Search the queue or the history | <kbd>Ctrl</kbd>+<kbd>F</kbd>; <kbd>Esc</kbd> clears the search |
 | Copy and go back to the previous app | <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd> or double-click on an item |
 | Copy only | **Copiar** button shown on hover |
 | Check or uncheck | Checkbox or <kbd>Space</kbd> |
@@ -142,7 +145,7 @@ The extension asks for:
 | Delete (moves to history) | <kbd>Delete</kbd> or <kbd>Backspace</kbd> |
 | Reorder | <kbd>Ctrl</kbd>+<kbd>↑</kbd> / <kbd>Ctrl</kbd>+<kbd>↓</kbd> |
 | Clear checked items (moves them to history) | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Backspace</kbd> |
-| Queue / Notes / History | <kbd>Ctrl</kbd>+<kbd>1</kbd> / <kbd>Ctrl</kbd>+<kbd>2</kbd> / <kbd>Ctrl</kbd>+<kbd>3</kbd> |
+| Queue / Notes / History | <kbd>Ctrl</kbd>+<kbd>1</kbd> / <kbd>Ctrl</kbd>+<kbd>2</kbd> / <kbd>Ctrl</kbd>+<kbd>3</kbd>, or the **···** menu |
 | History: restore to the queue | <kbd>Ctrl</kbd>+<kbd>Z</kbd> or the ↶ button |
 | History: delete forever | <kbd>Delete</kbd> |
 | Hide | <kbd>Esc</kbd> |
@@ -170,8 +173,10 @@ The executable has three modes, picked from its arguments before Tauri starts:
 
 The capture logic in [`src-tauri/src/logic.rs`](src-tauri/src/logic.rs) is the same on both platforms. What differs lives in [`src-tauri/src/platform/`](src-tauri/src/platform/):
 
-- **Linux** reads and watches the Wayland primary selection with `wl-paste`, copies with `wl-copy`, reads the active window with `hyprctl` and notifies with `notify-send`. On Wayland the primary selection stays available after nothing looks selected, so Patina watches its changes to tell fresh selections from stale ones.
+- **Linux** reads and watches the Wayland primary selection with `wl-paste`, also as `text/html` when the source offers it, copies with `wl-copy`, reads the active window with `hyprctl` and notifies with `notify-send`. On Wayland the primary selection stays available after nothing looks selected, so Patina watches its changes to tell fresh selections from stale ones.
 - **Windows** detects double Shift with a low-level keyboard hook and copies the selection with a simulated <kbd>Ctrl</kbd>+<kbd>C</kbd>. It also registers the native messaging host in the registry, the global shortcut, the tray icon and autostart.
+
+A capture saves its text and, when available, its HTML in the item's `html` field. The extension builds that HTML from the page's computed styles, so bold set by CSS counts too. The interface only borrows bold, italic, code and links from it and lays them over the saved text ([`ui/format.js`](ui/format.js)). If the characters don't match apart from whitespace, or a mark covers the whole text, the item shows as plain text.
 
 On Linux, Patina sets `WEBKIT_DISABLE_DMABUF_RENDERER=1` before starting WebKitGTK. Without it, the window crashes with "Error 71 (Protocol error)" on Wayland with NVIDIA drivers.
 

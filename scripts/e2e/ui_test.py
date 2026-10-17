@@ -11,7 +11,7 @@ failures = []
 
 ITEMS = [
     {"id": "a1", "kind": "prompt", "text": "Revisar el PR de pagos y proponer tests", "source": "",
-     "created": "2026-10-13T20:40:00", "done": False},
+     "created": "2026-10-13T20:40:00", "done": False, "html": "Revisar el <b>PR de pagos</b> y proponer <code>tests</code>"},
     {"id": "a2", "kind": "capture", "text": "Mañana te paso el presupuesto", "source": "WhatsApp Business",
      "created": "2026-10-13T20:28:00", "done": False, "sender": "Ana Gómez", "sent": "2026-10-13T20:27",
      "chat": "Equipo Ventas"},
@@ -146,28 +146,28 @@ keys("-k", "Return")
 check("al mostrarse el foco está en la entrada y Enter agrega el prompt",
       wait_for(lambda: items()[-1]["text"] == "nuevo prompt desde la UI"), items()[-1]["text"])
 
-click(37, 128)
+click(33, 81)
 check("click en el checkbox tacha sin cerrar", wait_for(lambda: items()[0]["done"]) and patina_window() is not None)
 
 copy("marcador")
-hover(300, 207)
+hover(300, 160)
 shot("02-hover-fila")
-click(491, 195)
+click(489, 150)
 time.sleep(0.15)
 shot("03-copiado")
 check("botón Copiar copia sin tachar ni cerrar", clipboard() == ITEMS[1]["text"] and not items()[1]["done"]
       and patina_window() is not None, repr(clipboard()))
 
 copy("marcador")
-click(233, 251)
+click(236, 219)
 check("click en un link lo abre sin seleccionar ni copiar",
       wait_for(lambda: os.path.exists(OPENED) and open(OPENED).read().strip() == "https://example.com/docs")
       and clipboard() == "marcador" and patina_window() is not None, repr(open(OPENED).read() if os.path.exists(OPENED) else ""))
 
-click(100, 290)
+click(80, 219)
 check("un click en el texto solo selecciona", clipboard() == "marcador" and patina_window() is not None, repr(clipboard()))
 
-click(100, 290, count=2)
+click(80, 219, count=2)
 check("doble click copia y oculta, sin tachar", wait_for(lambda: patina_window() is None) and clipboard() == ITEMS[2]["text"]
       and not items()[2]["done"], repr(clipboard()))
 
@@ -189,7 +189,7 @@ shot("05-notas")
 
 keys("-M", "ctrl", "-k", "1", "-m", "ctrl")
 n = len(items())
-click(150, 314)
+click(150, 288)
 keys("-k", "Delete")
 check("Supr manda el item seleccionado al historial", wait_for(lambda: len(items()) == n - 1)
       and history()[-1]["text"] == ITEMS[3]["text"], str(len(items())))
@@ -207,6 +207,12 @@ check("una selección de ~200 KB se captura entera", wait_for(lambda: len(items(
 time.sleep(0.8)
 time.sleep(0.8)
 shot("06-captura-externa")
+
+click(530, 30)
+shot("07-menu")
+click(400, 295)
+time.sleep(0.3)
+shot("08-oscuro")
 
 keys("-k", "Escape")
 check("Esc oculta la ventana", wait_for(lambda: patina_window() is None))

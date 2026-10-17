@@ -103,6 +103,54 @@ function visibleText(range) {
   return out.trim();
 }
 
+// La selección como HTML mínimo (<b>, <i>, <code>, <a>) según los estilos calculados, así cuenta
+// también la negrita que la página pone por CSS. Patina toma de acá solo el formato: el texto sale
+// de visibleText.
+const MONOSPACE = /mono|courier|consolas|menlo/i;
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+
+// Como visibleText, que no entra en elementos ocultos: un texto bajo un ancestro oculto no se ve.
+function hiddenChecker() {
+  const hidden = new Map();
+  return function isHidden(element) {
+    if (!element) return false;
+    if (!hidden.has(element)) {
+      const style = getComputedStyle(element);
+      hidden.set(element, style.display === "none" || style.visibility === "hidden" || isHidden(element.parentElement));
+    }
+    return hidden.get(element);
+  };
+}
+
+function formattedHtml(range) {
+  const isHidden = hiddenChecker();
+  const root = range.commonAncestorContainer;
+  const walker = document.createTreeWalker(root.nodeType === Node.TEXT_NODE ? root.parentNode : root, NodeFilter.SHOW_TEXT);
+  let html = "";
+  let visited = 0;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (++visited > MAX_NODES) throw new Error("selección demasiado grande");
+    if (!range.intersectsNode(node) || !node.parentElement) continue;
+    let text = node.data;
+    if (node === range.endContainer) text = text.slice(0, range.endOffset);
+    if (node === range.startContainer) text = text.slice(range.startOffset);
+    if (!text.trim()) continue;
+    if (isHidden(node.parentElement)) continue;
+    const style = getComputedStyle(node.parentElement);
+    let part = escapeHtml(text);
+    if (MONOSPACE.test(style.fontFamily)) part = `<code>${part}</code>`;
+    if (Number(style.fontWeight) >= 600) part = `<b>${part}</b>`;
+    if (style.fontStyle === "italic") part = `<i>${part}</i>`;
+    const href = node.parentElement.closest("a[href]")?.href;
+    if (href?.startsWith("http")) part = `<a href="${escapeHtml(href)}">${part}</a>`;
+    html += part;
+  }
+  return html;
+}
+
 function report() {
   const selection = document.getSelection();
   let text = selection?.rangeCount ? selection.toString() : "";
@@ -115,6 +163,13 @@ function report() {
   }
   // También se avisa la selección vacía: Patina la usa para no capturar una selección que ya no se ve.
   const payload = { text: text.trim() ? text : "", url: location.href, title: document.title };
+  if (payload.text) {
+    try {
+      payload.html = formattedHtml(selection.getRangeAt(0));
+    } catch {
+      // sin formato: queda el texto plano
+    }
+  }
   if (payload.text && isWhatsApp) Object.assign(payload, whatsappDetails(selection.getRangeAt(0)));
   const key = JSON.stringify(payload);
   if (key === lastSent) return;

@@ -82,6 +82,7 @@ pub fn parse_message(
         messages,
         chat: text(&data, "chat"),
         date_order: if matches!(order.as_str(), "dmy" | "mdy" | "ymd") { order } else { String::new() },
+        html: crate::logic::bounded_html(text(&data, "html")).unwrap_or_default(),
         received: now,
     }))
 }

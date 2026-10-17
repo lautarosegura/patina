@@ -91,12 +91,13 @@ pub fn handle(app: &AppHandle, command: Command) {
 pub fn capture(app: &AppHandle) {
     let state = app.state::<AppState>();
     let window = platform::active_window();
-    let (text, clock) = platform::selection(&state.clock);
+    let (text, html, clock) = platform::selection(&state.clock);
     let page: Option<Page> = read_json(&state.paths.page);
     let selection: Option<Selection> = read_json(&state.paths.selection);
     let now = epoch_seconds();
     let input = CaptureInput {
         selection_text: &text,
+        selection_html: &html,
         clock,
         now,
         window: &window,

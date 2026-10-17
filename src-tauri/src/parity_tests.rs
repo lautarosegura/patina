@@ -192,6 +192,7 @@ fn capture_matches() {
         let selection: Option<Selection> = opt(&c["selection"]);
         let input = CaptureInput {
             selection_text: s(&c["primary"]),
+            selection_html: "",
             clock: SelectionClock { changed_at: ago(&c["changed_ago"]), captured_at: ago(&c["captured_ago"]) },
             now,
             window: &window,

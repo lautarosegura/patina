@@ -20,6 +20,7 @@ ITEMS = [
     {"id": "s2", "kind": "capture", "text": "Can you send me the updated pricing before Friday's call?", "source": "WhatsApp",
      "created": f"{TODAY}T10:43:00", "done": False, "sender": "Ana Gómez", "sent": f"{TODAY}T10:42", "chat": "Sales team"},
     {"id": "s3", "kind": "capture", "text": "Build with --release for production: debug builds skip LTO and are 3x bigger.",
+     "html": "Build with <code>--release</code> for production: <b>debug builds skip LTO</b> and are 3x bigger.",
      "source": "brave-browser", "created": f"{TODAY}T11:05:00", "done": False, "url": "https://github.com/tauri-apps/tauri",
      "title": "tauri-apps/tauri", "host": "github.com", "favicon": GITHUB_FAVICON},
     {"id": "s4", "kind": "prompt", "text": "Summarize https://tauri.app/start/ in five bullet points for the onboarding doc",
@@ -93,8 +94,8 @@ time.sleep(2)
 subprocess.run([BIN])
 wait_for(lambda: patina_window() is not None)
 time.sleep(1.5)
-at(300, 200)
-at(491, 197, clicks=1)
+at(300, 170)
+at(489, 170, clicks=1)
 time.sleep(0.15)
 shot("screenshot-queue")
 time.sleep(2)

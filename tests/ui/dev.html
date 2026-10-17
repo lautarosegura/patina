@@ -10,31 +10,41 @@
   <script type="module" src="../../ui/app.js"></script>
 </head>
 <body>
-  <header class="header" data-tauri-drag-region>
-    <nav class="tabs" role="tablist" aria-label="Patina">
-      <button id="tab-queue" class="tab active" role="tab" aria-selected="true" aria-controls="queue" data-tab="queue"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m 2 1 c -0.554688 0 -1 0.445312 -1 1 v 2 c 0 0.554688 0.445312 1 1 1 h 2 c 0.554688 0 1 -0.445312 1 -1 v -2 c 0 -0.554688 -0.445312 -1 -1 -1 z m 5 1 v 2 h 8 v -2 z m -5 4.015625 c -0.554688 0 -1 0.445313 -1 1 v 1.980469 c 0 0.550781 0.445312 1 1 1 h 2 c 0.554688 0 1 -0.449219 1 -1 v -1.980469 c 0 -0.554687 -0.445312 -1 -1 -1 z m 5 0.984375 v 2 h 8 v -2 z m -5 4 c -0.554688 0 -1 0.445312 -1 1 v 1.980469 c 0 0.550781 0.445312 1 1 1 h 2 c 0.554688 0 1 -0.449219 1 -1 v -1.980469 c 0 -0.554688 -0.445312 -1 -1 -1 z m 5 0.984375 v 2 h 8 v -2 z m 0 0" fill="currentColor"/></svg>Cola</button>
-      <button id="tab-notes" class="tab" role="tab" aria-selected="false" aria-controls="notes" data-tab="notes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m 12.277344 0.832031 c -0.578125 0.007813 -1.167969 0.230469 -1.691406 0.753907 l -9 9 c -0.375 0.375 -0.585938 0.882812 -0.585938 1.414062 v 3 h 3 c 0.53125 0 1.039062 -0.210938 1.414062 -0.585938 l 9 -9 c 1.789063 -1.789062 0.082032 -4.390624 -1.890624 -4.570312 c -0.082032 -0.011719 -0.164063 -0.011719 -0.246094 -0.011719 z m -1.777344 3.605469 l 1.0625 1.0625 l -7.0625 7.0625 l -1.0625 -1.0625 z m 0 0" fill="currentColor"/></svg>Notas</button>
-      <button id="tab-history" class="tab" role="tab" aria-selected="false" aria-controls="history" data-tab="history"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor"/><path d="M7.5 4h1v4h3v1h-4z"/></svg>Historial</button>
-    </nav>
-    <div class="header-actions">
-      <button id="clear-done" class="icon-button" title="Borrar los completados (Ctrl+Shift+Retroceso)" aria-label="Borrar los completados"><svg viewBox="0 0 16 16" aria-hidden="true"><g fill="currentColor">
-        <path d="m 2 0 c -1.109375 0 -2 0.890625 -2 2 v 6 c 0 1.109375 0.890625 2 2 2 v -8 h 8 c 0 -1.109375 -0.890625 -2 -2 -2 z m 0 0"/>
-        <path d="m 8 6 c -1.109375 0 -2 0.890625 -2 2 v 6 c 0 1.109375 0.890625 2 2 2 h 6 c 1.109375 0 2 -0.890625 2 -2 v -6 c 0 -1.109375 -0.890625 -2 -2 -2 z m 0.003906 2 h 1 h 0.03125 c 0.253906 0.011719 0.507813 0.128906 0.6875 0.3125 l 1.28125 1.28125 l 1.308594 -1.28125 c 0.265625 -0.230469 0.445312 -0.304688 0.6875 -0.3125 h 1 v 1 c 0 0.285156 -0.035156 0.550781 -0.25 0.75 l -1.28125 1.28125 l 1.25 1.25 c 0.1875 0.1875 0.28125 0.453125 0.28125 0.71875 v 1 h -1 c -0.265625 0 -0.53125 -0.09375 -0.71875 -0.28125 l -1.28125 -1.28125 l -1.28125 1.28125 c -0.1875 0.1875 -0.453125 0.28125 -0.71875 0.28125 h -0.996094 v -1 c 0 -0.265625 0.09375 -0.53125 0.28125 -0.71875 l 1.277344 -1.25 l -1.277344 -1.28125 c -0.210937 -0.195312 -0.304687 -0.46875 -0.28125 -0.75 z m 0 0"/>
-        <path d="m 5 3 c -1.109375 0 -2 0.890625 -2 2 v 6 c 0 1.109375 0.890625 2 2 2 v -8 h 8 c 0 -1.109375 -0.890625 -2 -2 -2 z m 0 0"/>
-    </g></svg></button>
-      <button id="close" class="icon-button close" aria-label="Cerrar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 3.5 3.5 3.5 3.5-3.5 1 1L9 8l3.5 3.5-1 1L8 9l-3.5 3.5-1-1L7 8 3.5 4.5z"/></svg></button>
+  <header class="top" data-tauri-drag-region>
+    <button id="back" class="round-button" type="button" title="Volver a la cola (Ctrl+1)" aria-label="Volver a la cola" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <label id="search-wrap" class="search">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Buscar" aria-label="Buscar" autocomplete="off" spellcheck="false">
+    </label>
+    <h1 id="view-title" class="view-title" data-tauri-drag-region hidden>Notas</h1>
+    <button id="menu-button" class="round-button" type="button" aria-label="Menú" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12.5" cy="8" r="1.3"/></svg></button>
+    <div id="menu" class="menu" role="menu" aria-label="Menú" hidden>
+      <button class="menu-item" role="menuitemradio" data-view="queue">Cola<kbd>Ctrl+1</kbd></button>
+      <button class="menu-item" role="menuitemradio" data-view="notes">Notas<kbd>Ctrl+2</kbd></button>
+      <button class="menu-item" role="menuitemradio" data-view="history">Historial<kbd>Ctrl+3</kbd></button>
+      <div class="menu-separator" role="separator"></div>
+      <button id="clear-done" class="menu-item" role="menuitem">Borrar completados<kbd>Ctrl+Shift+Retroceso</kbd></button>
+      <div class="menu-separator" role="separator"></div>
+      <div class="menu-label">Tema</div>
+      <button class="menu-item" role="menuitemradio" data-theme="system">Sistema</button>
+      <button class="menu-item" role="menuitemradio" data-theme="light">Claro</button>
+      <button class="menu-item" role="menuitemradio" data-theme="dark">Oscuro</button>
+      <div class="menu-separator" role="separator"></div>
+      <button id="close" class="menu-item" role="menuitem">Ocultar<kbd>Esc</kbd></button>
     </div>
   </header>
   <main>
-    <section id="queue" class="panel" role="tabpanel" aria-labelledby="tab-queue">
-      <div class="entry-wrap"><input id="prompt-entry" type="text" placeholder="Escribí un prompt y Enter…" aria-label="Escribí un prompt y Enter…" autocomplete="off" spellcheck="false"></div>
-      <div id="queue-scroller" class="scroller"><div id="queue-list" class="boxed-list" role="listbox" aria-label="Cola"></div></div>
+    <section id="queue" class="panel" aria-label="Cola">
+      <div id="queue-scroller" class="scroller"><div id="queue-list" class="list" role="listbox" aria-label="Cola"></div><p id="queue-no-match" class="no-match" hidden>Nada coincide con la búsqueda.</p></div>
       <div id="queue-empty" class="empty" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m 7 0 c -0.554688 0 -1 0.445312 -1 1 h -2 c -1.644531 0 -3 1.355469 -3 3 v 9 c 0 1.644531 1.355469 3 3 3 h 8 c 1.644531 0 3 -1.355469 3 -3 v -9 c 0 -1.644531 -1.355469 -3 -3 -3 h -2 c 0 -0.554688 -0.445312 -1 -1 -1 z m -3 3 h 1 v 1 c 0 0.554688 0.445312 1 1 1 h 4 c 0.554688 0 1 -0.445312 1 -1 v -1 h 1 c 0.570312 0 1 0.429688 1 1 v 9 c 0 0.570312 -0.429688 1 -1 1 h -8 c -0.570312 0 -1 -0.429688 -1 -1 v -9 c 0 -0.570312 0.429688 -1 1 -1 z m 0 0" fill="currentColor"/></svg><h1>Nada en la cola</h1><p>Seleccioná texto en cualquier app y tocá Shift dos veces.<br>O escribí tus próximos prompts acá arriba.</p></div>
+      <div class="composer">
+        <span class="circle" aria-hidden="true"></span>
+        <textarea id="prompt-entry" rows="1" placeholder="Agregá una nota o un prompt" aria-label="Agregá una nota o un prompt" autocomplete="off" spellcheck="false"></textarea>
+      </div>
     </section>
-    <section id="notes" class="panel" role="tabpanel" aria-labelledby="tab-notes" hidden><textarea id="notes-text" aria-label="Notas" spellcheck="false"></textarea></section>
-    <section id="history" class="panel" role="tabpanel" aria-labelledby="tab-history" hidden>
-      <div class="entry-wrap search-wrap"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5"/><path d="m10 10 4 4"/></svg><input id="history-search" type="search" placeholder="Buscar en el historial…" aria-label="Buscar en el historial…" autocomplete="off" spellcheck="false"></div>
-      <div id="history-scroller" class="scroller"><div id="history-list" class="boxed-list" role="listbox" aria-label="Historial"></div></div>
+    <section id="notes" class="panel" aria-label="Notas" hidden><textarea id="notes-text" aria-label="Notas" spellcheck="false"></textarea></section>
+    <section id="history" class="panel" aria-label="Historial" hidden>
+      <div id="history-scroller" class="scroller"><div id="history-list" class="list" role="listbox" aria-label="Historial"></div><p id="history-no-match" class="no-match" hidden>Nada coincide con la búsqueda.</p></div>
       <div id="history-empty" class="empty" hidden><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="5"/><path d="M29 15h5v17h13v5H29z"/></svg><h1>Historial vacío</h1><p>Lo que limpies o borres de la cola queda guardado acá.</p></div>
     </section>
   </main>

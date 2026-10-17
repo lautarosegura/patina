@@ -10,6 +10,17 @@
       "done": false
     },
     {
+      "id": "a0",
+      "kind": "capture",
+      "text": "Negación en configs heredadas. Cuando una config puede extender un preset, alguien necesita quitar una extensión del base. Usar TOML como formato por defecto y validar con serde_json.",
+      "source": "brave-browser",
+      "created": "2026-10-13T20:39:00",
+      "done": false,
+      "url": "https://github.com/foo/bar",
+      "host": "github.com",
+      "html": "<p><b>Negación en configs heredadas.</b> Cuando una config puede extender un preset, alguien necesita <i>quitar</i> una extensión del base.</p><p>Usar <strong>TOML como formato por defecto</strong> y validar con <code>serde_json</code>.</p>"
+    },
+    {
       "id": "a2",
       "kind": "capture",
       "text": "Mañana te paso el presupuesto actualizado con los nuevos precios",

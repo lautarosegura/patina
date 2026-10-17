@@ -55,3 +55,57 @@ export function linkSegments(text) {
   if (position < text.length) segments.push({ text: text.slice(position) });
   return segments;
 }
+
+const MARKS = ['bold', 'italic', 'code'];
+const markKey = (style) => style ? `${MARKS.filter((mark) => style[mark]).join()}|${style.href || ''}` : '|';
+
+// Lays the formatting of `runs` ({text, bold, italic, code, href}, parsed from the captured HTML)
+// over `text`, which stays exactly as saved. Returns null when there's nothing to show or the
+// characters differ apart from whitespace, so the item renders as plain text.
+export function richSegments(text, runs) {
+  const marked = [];
+  for (const run of runs) {
+    for (const character of run.text) if (!/\s/.test(character)) marked.push({ character, style: run });
+  }
+  const styles = [];
+  let next = 0;
+  for (const character of text) {
+    if (/\s/.test(character)) {
+      styles.push(undefined);
+      continue;
+    }
+    if (marked[next]?.character !== character) return null;
+    styles.push(marked[next++].style);
+  }
+  if (next !== marked.length || !next) return null;
+  // A mark on every character tells nothing about the text (a heading, a terminal page): drop it.
+  const shown = Object.fromEntries(MARKS.map((mark) => [mark, !marked.every(({ style }) => style[mark])]));
+  const characters = Array.from(text);
+  const visible = styles.map((style) => style && {
+    ...Object.fromEntries(MARKS.map((mark) => [mark, shown[mark] && !!style[mark]])),
+    href: style.href || '',
+  });
+  // Whitespace takes the style around it only when both sides agree, so "**a** b" keeps the space plain.
+  for (let i = 0; i < visible.length; i++) {
+    if (visible[i]) continue;
+    let after = i;
+    while (after < visible.length && !visible[after]) after++;
+    const before = visible[i - 1];
+    const style = before && visible[after] && markKey(before) === markKey(visible[after]) ? before : null;
+    for (; i < after; i++) visible[i] = style;
+    i--;
+  }
+  const segments = [];
+  characters.forEach((character, i) => {
+    const style = visible[i] || null;
+    const last = segments.at(-1);
+    if (last && markKey(last.style) === markKey(style)) last.text += character;
+    else segments.push({ text: character, style });
+  });
+  if (segments.every(({ style }) => markKey(style) === '|')) return null;
+  return segments.map(({ text, style }) => ({
+    text,
+    ...Object.fromEntries(MARKS.map((mark) => [mark, !!style?.[mark]])),
+    href: style?.href || '',
+  }));
+}

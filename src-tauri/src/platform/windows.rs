@@ -241,9 +241,10 @@ fn copy_selection() -> Option<String> {
 
 static FIRST_COPIED_AT: Mutex<Option<(String, f64)>> = Mutex::new(None);
 
-pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock) {
+/// Windows captures plain text only: the HTML is left empty.
+pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, String, SelectionClock) {
     let Some(text) = copy_selection().filter(|text| !text.trim().is_empty()) else {
-        return (String::new(), SelectionClock::default());
+        return (String::new(), String::new(), SelectionClock::default());
     };
     let mut first_copied = FIRST_COPIED_AT.lock().unwrap();
     let changed_at = match &*first_copied {
@@ -254,7 +255,7 @@ pub fn selection(clock: &Arc<Mutex<SelectionClock>>) -> (String, SelectionClock)
             now
         }
     };
-    (text, SelectionClock { changed_at: Some(changed_at), captured_at: clock.lock().unwrap().captured_at })
+    (text, String::new(), SelectionClock { changed_at: Some(changed_at), captured_at: clock.lock().unwrap().captured_at })
 }
 
 pub fn copy(_app: &AppHandle, text: &str) {
